@@ -97,3 +97,18 @@ test('LogContext default level', () => {
   expect(mockInfo.lastCall.args).to.deep.equal(['bbb']);
   expect(mockError.lastCall.args).to.deep.equal(['ccc']);
 });
+
+test('Optional tag', () => {
+  const mockDebug = mockConsoleMethod('debug');
+  const lc = new LogContext('debug');
+  lc.debug?.('a');
+  expect(mockDebug.lastCall.args).to.deep.equal(['a']);
+
+  const lc2 = lc.addContext('b');
+  lc2.debug?.('c');
+  expect(mockDebug.lastCall.args).to.deep.equal(['b', 'c']);
+
+  const lc3 = lc.addContext('d', 'e');
+  lc3.debug?.('f');
+  expect(mockDebug.lastCall.args).to.deep.equal(['d=e', 'f']);
+});

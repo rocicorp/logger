@@ -90,13 +90,13 @@ export class SilentLogger implements OptionalLogger {
  *   f(lc2);  // logging inside f will be prefixed with 'foo'
  */
 export class LogContext extends OptionalLoggerImpl {
-  private readonly _s;
+  private readonly _s: string;
   private readonly _logger: OptionalLogger;
 
   /**
    * @param loggerOrLevel If passed a LogLevel a ConsoleLogget is used
    */
-  constructor(loggerOrLevel: OptionalLogger | LogLevel = 'info', tag?: string) {
+  constructor(loggerOrLevel: OptionalLogger | LogLevel = 'info', tag = '') {
     const actualLogger: OptionalLogger = isLogLevel(loggerOrLevel)
       ? new OptionalLoggerImpl(consoleLogger, loggerOrLevel)
       : loggerOrLevel;
