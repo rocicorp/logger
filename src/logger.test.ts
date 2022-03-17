@@ -68,7 +68,7 @@ test('LogContext formatting', () => {
 
   const lc = new LogContext('debug');
   lc.debug?.('aaa');
-  expect(mockDebug.lastCall.args).to.deep.equal(['', 'aaa']);
+  expect(mockDebug.lastCall.args).to.deep.equal(['aaa']);
 
   const lc2 = new LogContext('debug', 'bbb');
   lc2.debug?.('ccc');
@@ -81,4 +81,19 @@ test('LogContext formatting', () => {
   const lc4 = lc2.addContext('fff', 'ggg');
   lc4.debug?.('hhh');
   expect(mockDebug.lastCall.args).to.deep.equal(['bbb fff=ggg', 'hhh']);
+});
+
+test('LogContext default level', () => {
+  const mockDebug = mockConsoleMethod('debug');
+  const mockInfo = mockConsoleMethod('info');
+  const mockError = mockConsoleMethod('error');
+
+  const lc = new LogContext();
+  lc.debug?.('aaa');
+  lc.info?.('bbb');
+  lc.error?.('ccc');
+
+  expect(mockDebug.callCount).to.equal(0);
+  expect(mockInfo.lastCall.args).to.deep.equal(['bbb']);
+  expect(mockError.lastCall.args).to.deep.equal(['ccc']);
 });

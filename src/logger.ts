@@ -96,17 +96,20 @@ export class LogContext extends OptionalLoggerImpl {
   /**
    * @param loggerOrLevel If passed a LogLevel a ConsoleLogget is used
    */
-  constructor(loggerOrLevel: OptionalLogger | LogLevel, tag = '') {
+  constructor(loggerOrLevel: OptionalLogger | LogLevel = 'info', tag?: string) {
     const actualLogger: OptionalLogger = isLogLevel(loggerOrLevel)
       ? new OptionalLoggerImpl(consoleLogger, loggerOrLevel)
       : loggerOrLevel;
 
     super(
       {
-        log(name: LogLevel, ...args: unknown[]) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          actualLogger[name]!(tag, ...args);
-        },
+        log: tag
+          ? (name, ...args) =>
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              actualLogger[name]!(tag, ...args)
+          : (name, ...args) =>
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              actualLogger[name]!(...args),
       },
       getLogLevel(actualLogger),
     );
