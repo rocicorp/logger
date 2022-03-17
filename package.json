@@ -1,7 +1,7 @@
 {
   "name": "@rocicorp/logger",
   "description": "Logging utilities",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "repository": "github:rocicorp/logger",
   "license": "Apache-2.0",
   "engines": {
