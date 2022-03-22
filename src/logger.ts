@@ -31,8 +31,19 @@ export class OptionalLoggerImpl implements OptionalLogger {
   constructor(logger: Logger, level: LogLevel = 'info') {
     const impl =
       (level: LogLevel) =>
-      (...args: unknown[]) =>
+      (...args: unknown[]) => {
+        // I want to prepend a tag for the levels here eg 'DEB'. I have stripped out all
+        // that business to just focus on the thing that doesn't make any sense to me.
+        // To illustrate I'm just prepending 'DBG' to all log calls but 'DBG' shows up
+        // TWICE in some of the unit tests. I expect test failures to not expect the 'DBG',
+        // but what i see is it fails because 'DBG' is there not once but twice!
+        // Example test failure:
+        //
+        // 2) LogContext formatting:
+        // AssertionError: expected [ 'DBG', 'DBG', 'aaa' ] to deeply equal [ 'aaa' ]
+        args.unshift('DBG');
         logger.log(level, ...args);
+      };
 
     /* eslint-disable no-fallthrough , @typescript-eslint/ban-ts-comment */
     switch (level) {
