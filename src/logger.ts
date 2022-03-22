@@ -152,15 +152,9 @@ function prependTag(logSink: LogSink, tag: string | undefined): LogSink {
     return logSink;
   }
 
-  const newLogSink: LogSink = {
+  return {
     log(level, ...args) {
       logSink.log(level, tag, ...args);
     },
   };
-
-  if (logSink.flush) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    newLogSink.flush = () => logSink.flush!();
-  }
-  return newLogSink;
 }
