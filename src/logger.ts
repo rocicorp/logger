@@ -17,6 +17,11 @@ export interface OptionalLogger {
  * and `'debug'` lowest.
  */
 export type LogLevel = 'error' | 'info' | 'debug';
+export const logLevelTag = {
+  error: 'ERR',
+  info: 'INF',
+  debug: 'DBG',
+};
 
 export interface Logger {
   log(level: LogLevel, ...args: unknown[]): void;
@@ -31,9 +36,10 @@ export class OptionalLoggerImpl implements OptionalLogger {
   constructor(logger: Logger, level: LogLevel = 'info') {
     const impl =
       (level: LogLevel) =>
-      (...args: unknown[]) =>
+      (...args: unknown[]) => {
+        args.push('wat'); // <- I expect this to show up exactly once in the log call
         logger.log(level, ...args);
-
+      };
     /* eslint-disable no-fallthrough , @typescript-eslint/ban-ts-comment */
     switch (level) {
       // @ts-ignore
