@@ -84,19 +84,13 @@ export class SilentLogger implements OptionalLogger {}
  *   f(lc2);  // logging inside f will be prefixed with 'foo'
  */
 export class LogContext extends OptionalLoggerImpl {
-  private readonly _tag: string;
   private readonly _logSink: LogSink;
   private readonly _level: LogLevel;
 
-  constructor(
-    level: LogLevel = 'info',
-    logSink: LogSink = consoleLogSink,
-    tag = '',
-  ) {
-    super(prependTag(logSink, tag), level);
-    this._level = level ?? 'info';
+  constructor(level: LogLevel = 'info', logSink: LogSink = consoleLogSink) {
+    super(logSink, level);
+    this._level = level;
     this._logSink = logSink;
-    this._tag = tag ?? '';
   }
 
   /**
@@ -104,21 +98,12 @@ export class LogContext extends OptionalLoggerImpl {
    * and value.
    */
   addContext(key: string, value?: unknown): LogContext {
-    const space = this._tag ? ' ' : '';
     const ctx = value === undefined ? key : `${key}=${value}`;
-    const tag = `${this._tag}${space}${ctx}`;
-    return new LogContext(this._level, this._logSink, tag);
+    const logSink: LogSink = {
+      log: (level, ...args) => {
+        this._logSink.log(level, ctx, ...args);
+      },
+    };
+    return new LogContext(this._level, logSink);
   }
-}
-
-function prependTag(logSink: LogSink, tag: string | undefined): LogSink {
-  if (!tag) {
-    return logSink;
-  }
-
-  return {
-    log(level, ...args) {
-      logSink.log(level, tag, ...args);
-    },
-  };
 }

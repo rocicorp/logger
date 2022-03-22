@@ -1,11 +1,5 @@
 import {expect} from 'chai';
-import {
-  ConsoleLogger,
-  consoleLogSink,
-  LogContext,
-  OptionalLogger,
-  type LogLevel,
-} from './logger.js';
+import {ConsoleLogger, LogContext, type LogLevel} from './logger.js';
 import * as sinon from 'sinon';
 import {test, setup} from 'mocha';
 
@@ -76,17 +70,17 @@ test('LogContext formatting', () => {
   lc.debug?.('aaa');
   expect(mockDebug.lastCall.args).to.deep.equal(['aaa']);
 
-  const lc2 = new LogContext('debug', undefined, 'bbb');
+  const lc2 = new LogContext('debug').addContext('bbb');
   lc2.debug?.('ccc');
   expect(mockDebug.lastCall.args).to.deep.equal(['bbb', 'ccc']);
 
   const lc3 = lc2.addContext('ddd');
   lc3.debug?.('eee');
-  expect(mockDebug.lastCall.args).to.deep.equal(['bbb ddd', 'eee']);
+  expect(mockDebug.lastCall.args).to.deep.equal(['bbb', 'ddd', 'eee']);
 
   const lc4 = lc2.addContext('fff', 'ggg');
   lc4.debug?.('hhh');
-  expect(mockDebug.lastCall.args).to.deep.equal(['bbb fff=ggg', 'hhh']);
+  expect(mockDebug.lastCall.args).to.deep.equal(['bbb', 'fff=ggg', 'hhh']);
 });
 
 test('LogContext default level', () => {
@@ -117,30 +111,4 @@ test('Optional tag', () => {
   const lc3 = lc.addContext('d', 'e');
   lc3.debug?.('f');
   expect(mockDebug.lastCall.args).to.deep.equal(['d=e', 'f']);
-});
-
-function getLogLevel(logger: OptionalLogger): LogLevel {
-  return logger.debug ? 'debug' : logger.info ? 'info' : 'error';
-}
-
-function getTag(lc: LogContext): string {
-  const mockError = mockConsoleMethod('error');
-  lc.error?.();
-  const {args} = mockError.lastCall;
-  sinon.restore();
-  return args.length > 0 ? args[0] : '';
-}
-
-test('LogContext constructor parameters', () => {
-  const t = (lc: LogContext, expectedLevel: LogLevel, expectedTag: string) => {
-    expect(getLogLevel(lc)).to.equal(expectedLevel);
-    expect(getTag(lc)).to.equal(expectedTag);
-  };
-
-  t(new LogContext(), 'info', '');
-  t(new LogContext('debug'), 'debug', '');
-  t(new LogContext('debug', undefined, 'tag'), 'debug', 'tag');
-  t(new LogContext(undefined, consoleLogSink), 'info', '');
-  t(new LogContext('debug', consoleLogSink), 'debug', '');
-  t(new LogContext('debug', consoleLogSink, 'tag'), 'debug', 'tag');
 });
