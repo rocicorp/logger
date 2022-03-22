@@ -17,6 +17,11 @@ export interface OptionalLogger {
  * and `'debug'` lowest.
  */
 export type LogLevel = 'error' | 'info' | 'debug';
+export const logLevelTag = {
+  error: 'ERR',
+  info: 'INF',
+  debug: 'DBG',
+};
 
 export interface Logger {
   log(level: LogLevel, ...args: unknown[]): void;
@@ -63,7 +68,10 @@ export class ConsoleLogger extends OptionalLoggerImpl {
  */
 export const consoleLogger: Logger = {
   log(level: LogLevel, ...args: unknown[]): void {
-    console[level](...args);
+    // This really isn't the right place to put the log level tag, we should instead
+    // have a formatter that can be passed to a logger (including the consoleLogger)
+    // and we can then use that formatter regardless of where the log is going.
+    console[level](logLevelTag[level], ...args);
   },
 };
 
