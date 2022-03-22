@@ -18,7 +18,7 @@ export interface OptionalLogger {
  */
 export type LogLevel = 'error' | 'info' | 'debug';
 
-export interface Logger {
+export interface LogSink {
   log(level: LogLevel, ...args: unknown[]): void;
   flush?(): Promise<void>;
 }
@@ -28,11 +28,11 @@ export class OptionalLoggerImpl implements OptionalLogger {
   readonly info?: (...args: unknown[]) => void = undefined;
   readonly error?: (...args: unknown[]) => void = undefined;
 
-  constructor(logger: Logger, level: LogLevel = 'info') {
+  constructor(logSink: LogSink, level: LogLevel = 'info') {
     const impl =
       (level: LogLevel) =>
       (...args: unknown[]) =>
-        logger.log(level, ...args);
+        logSink.log(level, ...args);
 
     /* eslint-disable no-fallthrough , @typescript-eslint/ban-ts-comment */
     switch (level) {
@@ -45,7 +45,7 @@ export class OptionalLoggerImpl implements OptionalLogger {
       case 'error':
         this.error = impl('error');
     }
-    /* eslint-ensable @typescript-eslint/ban-ts-comment, no-fallthrough */
+    /* eslint-enable @typescript-eslint/ban-ts-comment, no-fallthrough */
   }
 }
 
@@ -54,14 +54,14 @@ export class OptionalLoggerImpl implements OptionalLogger {
  */
 export class ConsoleLogger extends OptionalLoggerImpl {
   constructor(level: LogLevel) {
-    super(consoleLogger, level);
+    super(consoleLogSink, level);
   }
 }
 
 /**
  * An implementation of [[Logger]] that logs using `console.log` etc
  */
-export const consoleLogger: Logger = {
+export const consoleLogSink: LogSink = {
   log(level: LogLevel, ...args: unknown[]): void {
     console[level](...args);
   },
@@ -70,13 +70,7 @@ export const consoleLogger: Logger = {
 /**
  * A logger that logs nothing.
  */
-export class SilentLogger implements OptionalLogger {
-  error() {
-    // We want at least error to be defined but it can be a noop. This is
-    // because when composing loggers getLogLevel will return error for silent
-    // logger.
-  }
-}
+export class SilentLogger implements OptionalLogger {}
 
 /**
  * The LogContext carries a contextual tag around and it prefixes the log
@@ -90,31 +84,13 @@ export class SilentLogger implements OptionalLogger {
  *   f(lc2);  // logging inside f will be prefixed with 'foo'
  */
 export class LogContext extends OptionalLoggerImpl {
-  private readonly _s: string;
-  private readonly _logger: OptionalLogger;
+  private readonly _logSink: LogSink;
+  private readonly _level: LogLevel;
 
-  /**
-   * @param loggerOrLevel If passed a LogLevel a ConsoleLogget is used
-   */
-  constructor(loggerOrLevel: OptionalLogger | LogLevel = 'info', tag = '') {
-    const actualLogger: OptionalLogger = isLogLevel(loggerOrLevel)
-      ? new OptionalLoggerImpl(consoleLogger, loggerOrLevel)
-      : loggerOrLevel;
-
-    super(
-      {
-        log: tag
-          ? (name, ...args) =>
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              actualLogger[name]!(tag, ...args)
-          : (name, ...args) =>
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              actualLogger[name]!(...args),
-      },
-      getLogLevel(actualLogger),
-    );
-    this._s = tag;
-    this._logger = actualLogger;
+  constructor(level: LogLevel = 'info', logSink: LogSink = consoleLogSink) {
+    super(logSink, level);
+    this._level = level;
+    this._logSink = logSink;
   }
 
   /**
@@ -122,22 +98,12 @@ export class LogContext extends OptionalLoggerImpl {
    * and value.
    */
   addContext(key: string, value?: unknown): LogContext {
-    const space = this._s ? ' ' : '';
-    const tag = value === undefined ? key : `${key}=${value}`;
-    return new LogContext(this._logger, `${this._s}${space}${tag}`);
+    const ctx = value === undefined ? key : `${key}=${value}`;
+    const logSink: LogSink = {
+      log: (level, ...args) => {
+        this._logSink.log(level, ctx, ...args);
+      },
+    };
+    return new LogContext(this._level, logSink);
   }
-}
-
-function getLogLevel(logger: OptionalLogger): LogLevel {
-  return logger.debug ? 'debug' : logger.info ? 'info' : 'error';
-}
-
-function isLogLevel(v: unknown): v is LogLevel {
-  switch (v) {
-    case 'error':
-    case 'info':
-    case 'debug':
-      return true;
-  }
-  return false;
 }
