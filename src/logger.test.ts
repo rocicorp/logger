@@ -76,7 +76,7 @@ test('LogContext formatting', () => {
   lc.debug?.('aaa');
   expect(mockDebug.lastCall.args).to.deep.equal(['aaa']);
 
-  const lc2 = new LogContext('debug', 'bbb');
+  const lc2 = new LogContext('debug', undefined, 'bbb');
   lc2.debug?.('ccc');
   expect(mockDebug.lastCall.args).to.deep.equal(['bbb', 'ccc']);
 
@@ -139,8 +139,8 @@ test('LogContext constructor parameters', () => {
 
   t(new LogContext(), 'info', '');
   t(new LogContext('debug'), 'debug', '');
-  t(new LogContext('debug', 'tag'), 'debug', 'tag');
-  t(new LogContext(consoleLogSink), 'info', '');
-  t(new LogContext(consoleLogSink, 'debug'), 'debug', '');
-  t(new LogContext(consoleLogSink, 'debug', 'tag'), 'debug', 'tag');
+  t(new LogContext('debug', undefined, 'tag'), 'debug', 'tag');
+  t(new LogContext(undefined, consoleLogSink), 'info', '');
+  t(new LogContext('debug', consoleLogSink), 'debug', '');
+  t(new LogContext('debug', consoleLogSink, 'tag'), 'debug', 'tag');
 });

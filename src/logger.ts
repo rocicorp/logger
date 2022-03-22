@@ -88,40 +88,14 @@ export class LogContext extends OptionalLoggerImpl {
   private readonly _logSink: LogSink;
   private readonly _level: LogLevel;
 
-  constructor();
-  constructor(level: LogLevel, tag?: string);
-  constructor(logSink: LogSink, level?: LogLevel, tag?: string);
   constructor(
-    levelOrLogSink?: LogLevel | LogSink,
-    levelOrTag?: LogLevel | string,
-    tag?: string,
+    level: LogLevel = 'info',
+    logSink: LogSink = consoleLogSink,
+    tag = '',
   ) {
-    let logSink: LogSink;
-    let level: LogLevel;
-
-    if (!levelOrLogSink) {
-      // No args: constructor();
-      logSink = consoleLogSink;
-      level = 'info';
-    } else if (isLogLevel(levelOrLogSink)) {
-      // No sink: constructor(level: LogLevel, tag?: string);
-      logSink = consoleLogSink;
-      level = levelOrLogSink;
-      tag = levelOrTag;
-    } else {
-      // constructor(logSink: LogSink, level?: LogLevel, tag?: string);
-      logSink = levelOrLogSink;
-      if (levelOrTag) {
-        level = levelOrTag as LogLevel;
-      } else {
-        level = 'info';
-      }
-      tag ??= '';
-    }
-
     super(prependTag(logSink, tag), level);
-    this._logSink = logSink;
     this._level = level ?? 'info';
+    this._logSink = logSink;
     this._tag = tag ?? '';
   }
 
@@ -133,18 +107,8 @@ export class LogContext extends OptionalLoggerImpl {
     const space = this._tag ? ' ' : '';
     const ctx = value === undefined ? key : `${key}=${value}`;
     const tag = `${this._tag}${space}${ctx}`;
-    return new LogContext(this._logSink, this._level, tag);
+    return new LogContext(this._level, this._logSink, tag);
   }
-}
-
-function isLogLevel(v: unknown): v is LogLevel {
-  switch (v) {
-    case 'error':
-    case 'info':
-    case 'debug':
-      return true;
-  }
-  return false;
 }
 
 function prependTag(logSink: LogSink, tag: string | undefined): LogSink {
