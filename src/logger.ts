@@ -32,7 +32,7 @@ export class OptionalLoggerImpl implements OptionalLogger {
     const impl =
       (level: LogLevel) =>
       (...args: unknown[]) =>
-        logger.log(level, ...args);
+        logger.log(level, 'DBG', ...args);
 
     /* eslint-disable no-fallthrough , @typescript-eslint/ban-ts-comment */
     switch (level) {
