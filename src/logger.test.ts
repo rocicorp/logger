@@ -1,5 +1,11 @@
 import {expect} from 'chai';
-import {ConsoleLogger, LogContext, type LogLevel} from './logger.js';
+import {
+  ConsoleLogger,
+  consoleLogSink,
+  LogContext,
+  OptionalLogger,
+  type LogLevel,
+} from './logger.js';
 import * as sinon from 'sinon';
 import {test, setup} from 'mocha';
 
@@ -111,4 +117,30 @@ test('Optional tag', () => {
   const lc3 = lc.addContext('d', 'e');
   lc3.debug?.('f');
   expect(mockDebug.lastCall.args).to.deep.equal(['d=e', 'f']);
+});
+
+function getLogLevel(logger: OptionalLogger): LogLevel {
+  return logger.debug ? 'debug' : logger.info ? 'info' : 'error';
+}
+
+function getTag(lc: LogContext): string {
+  const mockError = mockConsoleMethod('error');
+  lc.error?.();
+  const {args} = mockError.lastCall;
+  sinon.restore();
+  return args.length > 0 ? args[0] : '';
+}
+
+test('LogContext constructor parameters', () => {
+  const t = (lc: LogContext, expectedLevel: LogLevel, expectedTag: string) => {
+    expect(getLogLevel(lc)).to.equal(expectedLevel);
+    expect(getTag(lc)).to.equal(expectedTag);
+  };
+
+  t(new LogContext(), 'info', '');
+  t(new LogContext('debug'), 'debug', '');
+  t(new LogContext('debug', 'tag'), 'debug', 'tag');
+  t(new LogContext(consoleLogSink), 'info', '');
+  t(new LogContext(consoleLogSink, 'debug'), 'debug', '');
+  t(new LogContext(consoleLogSink, 'debug', 'tag'), 'debug', 'tag');
 });

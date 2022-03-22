@@ -62,28 +62,28 @@ const l: OptionalLogger = new ConsoleLogger('info');
 l.debug?.(alwaysThrows()); // does not print anything, but does not throw
 ```
 
-# Implementing Your Own `Logger`
+# Implementing Your Own `LogSink`
 
-There is also the `Logger` interface which is very minimal. Its intended use is
+There is also the `LogSink` interface which is very minimal. Its intended use is
 for custom log implementations.
 
 ```ts
-class ExampleLogger implements Logger {
+class ExampleLogSink implements LogSink {
   log(level: LogLevel, ...args: unknown[]): void {
     //...
   }
 }
 ```
 
-You can get an `OptionalLogger` from a `Logger` using `OptionalLoggerImpl`.
+You can get an `OptionalLogger` from a `LogSink` using `OptionalLoggerImpl`.
 
 ```ts
 import {
   OptionalLoggerImpl,
-  type Logger,
+  type LogSink,
   type OptionalLogger,
 } from '@rocicorp/logger';
 
-const logger: Logger = new ExampleLogger();
-const l: OptionalLogger = new OptionalLoggerImpl(logger);
+const logSink: LogSink = new ExampleLogSink();
+const l: OptionalLogger = new OptionalLoggerImpl(logSink);
 ```

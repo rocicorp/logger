@@ -18,7 +18,7 @@ export interface OptionalLogger {
  */
 export type LogLevel = 'error' | 'info' | 'debug';
 
-export interface Logger {
+export interface LogSink {
   log(level: LogLevel, ...args: unknown[]): void;
   flush?(): Promise<void>;
 }
@@ -28,11 +28,11 @@ export class OptionalLoggerImpl implements OptionalLogger {
   readonly info?: (...args: unknown[]) => void = undefined;
   readonly error?: (...args: unknown[]) => void = undefined;
 
-  constructor(logger: Logger, level: LogLevel = 'info') {
+  constructor(logSink: LogSink, level: LogLevel = 'info') {
     const impl =
       (level: LogLevel) =>
       (...args: unknown[]) =>
-        logger.log(level, ...args);
+        logSink.log(level, ...args);
 
     /* eslint-disable no-fallthrough , @typescript-eslint/ban-ts-comment */
     switch (level) {
@@ -45,7 +45,7 @@ export class OptionalLoggerImpl implements OptionalLogger {
       case 'error':
         this.error = impl('error');
     }
-    /* eslint-ensable @typescript-eslint/ban-ts-comment, no-fallthrough */
+    /* eslint-enable @typescript-eslint/ban-ts-comment, no-fallthrough */
   }
 }
 
@@ -54,14 +54,14 @@ export class OptionalLoggerImpl implements OptionalLogger {
  */
 export class ConsoleLogger extends OptionalLoggerImpl {
   constructor(level: LogLevel) {
-    super(consoleLogger, level);
+    super(consoleLogSink, level);
   }
 }
 
 /**
  * An implementation of [[Logger]] that logs using `console.log` etc
  */
-export const consoleLogger: Logger = {
+export const consoleLogSink: LogSink = {
   log(level: LogLevel, ...args: unknown[]): void {
     console[level](...args);
   },
@@ -70,13 +70,7 @@ export const consoleLogger: Logger = {
 /**
  * A logger that logs nothing.
  */
-export class SilentLogger implements OptionalLogger {
-  error() {
-    // We want at least error to be defined but it can be a noop. This is
-    // because when composing loggers getLogLevel will return error for silent
-    // logger.
-  }
-}
+export class SilentLogger implements OptionalLogger {}
 
 /**
  * The LogContext carries a contextual tag around and it prefixes the log
@@ -90,31 +84,45 @@ export class SilentLogger implements OptionalLogger {
  *   f(lc2);  // logging inside f will be prefixed with 'foo'
  */
 export class LogContext extends OptionalLoggerImpl {
-  private readonly _s: string;
-  private readonly _logger: OptionalLogger;
+  private readonly _tag: string;
+  private readonly _logSink: LogSink;
+  private readonly _level: LogLevel;
 
-  /**
-   * @param loggerOrLevel If passed a LogLevel a ConsoleLogget is used
-   */
-  constructor(loggerOrLevel: OptionalLogger | LogLevel = 'info', tag = '') {
-    const actualLogger: OptionalLogger = isLogLevel(loggerOrLevel)
-      ? new OptionalLoggerImpl(consoleLogger, loggerOrLevel)
-      : loggerOrLevel;
+  constructor();
+  constructor(level: LogLevel, tag?: string);
+  constructor(logSink: LogSink, level?: LogLevel, tag?: string);
+  constructor(
+    levelOrLogSink?: LogLevel | LogSink,
+    levelOrTag?: LogLevel | string,
+    tag?: string,
+  ) {
+    let logSink: LogSink;
+    let level: LogLevel;
 
-    super(
-      {
-        log: tag
-          ? (name, ...args) =>
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              actualLogger[name]!(tag, ...args)
-          : (name, ...args) =>
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              actualLogger[name]!(...args),
-      },
-      getLogLevel(actualLogger),
-    );
-    this._s = tag;
-    this._logger = actualLogger;
+    if (!levelOrLogSink) {
+      // No args: constructor();
+      logSink = consoleLogSink;
+      level = 'info';
+    } else if (isLogLevel(levelOrLogSink)) {
+      // No sink: constructor(level: LogLevel, tag?: string);
+      logSink = consoleLogSink;
+      level = levelOrLogSink;
+      tag = levelOrTag;
+    } else {
+      // constructor(logSink: LogSink, level?: LogLevel, tag?: string);
+      logSink = levelOrLogSink;
+      if (levelOrTag) {
+        level = levelOrTag as LogLevel;
+      } else {
+        level = 'info';
+      }
+      tag ??= '';
+    }
+
+    super(prependTag(logSink, tag), level);
+    this._logSink = logSink;
+    this._level = level ?? 'info';
+    this._tag = tag ?? '';
   }
 
   /**
@@ -122,14 +130,11 @@ export class LogContext extends OptionalLoggerImpl {
    * and value.
    */
   addContext(key: string, value?: unknown): LogContext {
-    const space = this._s ? ' ' : '';
-    const tag = value === undefined ? key : `${key}=${value}`;
-    return new LogContext(this._logger, `${this._s}${space}${tag}`);
+    const space = this._tag ? ' ' : '';
+    const ctx = value === undefined ? key : `${key}=${value}`;
+    const tag = `${this._tag}${space}${ctx}`;
+    return new LogContext(this._logSink, this._level, tag);
   }
-}
-
-function getLogLevel(logger: OptionalLogger): LogLevel {
-  return logger.debug ? 'debug' : logger.info ? 'info' : 'error';
 }
 
 function isLogLevel(v: unknown): v is LogLevel {
@@ -140,4 +145,22 @@ function isLogLevel(v: unknown): v is LogLevel {
       return true;
   }
   return false;
+}
+
+function prependTag(logSink: LogSink, tag: string | undefined): LogSink {
+  if (!tag) {
+    return logSink;
+  }
+
+  const newLogSink: LogSink = {
+    log(level, ...args) {
+      logSink.log(level, tag, ...args);
+    },
+  };
+
+  if (logSink.flush) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    newLogSink.flush = () => logSink.flush!();
+  }
+  return newLogSink;
 }
