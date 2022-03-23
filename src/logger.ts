@@ -86,7 +86,7 @@ export class FormatLogger implements LogSink {
  * Instantiates a new console LogContext logger appropriate for the node
  * environment.
  */
-export function newNodeLogContext(level: LogLevel): OptionalLogger {
+export function newNodeLogContext(level: LogLevel): LogContext {
   const fl = new FormatLogger(
     (lvl: LogLevel, ...args: unknown[]): unknown[] => {
       return [logLevelPrefix[lvl], ...args];
