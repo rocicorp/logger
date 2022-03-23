@@ -32,6 +32,10 @@ lc4.info('hello'); // prints "name bbb ccc hello"
 
 const lc5 = lc4.addContext('ddd', 'eee');
 lc5.info('hello'); // prints "name bbb ccc ddd=eee hello"
+
+// Or get a context logger appropriate for the Node environment.
+const nlc = newNodeLogContext('debug');
+nlc.info('fff'); // prints "INF fff"
 ```
 
 ## OptionalLogger

@@ -68,6 +68,44 @@ export const consoleLogSink: LogSink = {
 };
 
 /**
+ * A console logger that enables the caller to format log lines.
+ */
+export class FormatLogger implements LogSink {
+  private _format: (level: LogLevel, ...args: unknown[]) => unknown[];
+
+  constructor(format: (level: LogLevel, ...args: unknown[]) => unknown[]) {
+    this._format = format;
+  }
+
+  log(level: LogLevel, ...args: unknown[]): void {
+    console[level](...this._format(level, ...args));
+  }
+}
+
+/**
+ * Instantiates a new console LogContext logger appropriate for the node
+ * environment.
+ */
+export function newNodeLogContext(level: LogLevel): OptionalLogger {
+  const fl = new FormatLogger(
+    (lvl: LogLevel, ...args: unknown[]): unknown[] => {
+      return [logLevelPrefix[lvl], ...args];
+    },
+  );
+  return new LogContext(level, fl);
+}
+
+/**
+ * Log line level prefixes, used by the node logger. They are uniform length
+ * to make visual parsing of a log file easier.
+ */
+export const logLevelPrefix = {
+  error: 'ERR',
+  info: 'INF',
+  debug: 'DBG',
+};
+
+/**
  * A logger that logs nothing.
  */
 export class SilentLogger implements OptionalLogger {}
