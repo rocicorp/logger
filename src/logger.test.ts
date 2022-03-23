@@ -1,5 +1,11 @@
 import {expect} from 'chai';
-import {ConsoleLogger, LogContext, type LogLevel} from './logger.js';
+import {
+  ConsoleLogger,
+  FormatLogger,
+  LogContext,
+  newNodeLogContext,
+  type LogLevel,
+} from './logger.js';
 import * as sinon from 'sinon';
 import {test, setup} from 'mocha';
 
@@ -60,6 +66,56 @@ test('level to method', () => {
     expect(mockDebug.lastCall.args).to.deep.equal(['ggg']);
     expect(mockInfo.lastCall.args).to.deep.equal(['hhh']);
     expect(mockError.lastCall.args).to.deep.equal(['iii']);
+  }
+});
+
+test('FormatLogger', () => {
+  const mockDebug = mockConsoleMethod('debug');
+  const mockInfo = mockConsoleMethod('info');
+  const mockError = mockConsoleMethod('error');
+
+  {
+    // nop formatter
+    const l = new FormatLogger((_, ...args) => args);
+    l.log('debug', 'aaa');
+    l.log('info', 'bbb');
+    l.log('error', 'ccc');
+
+    expect(mockDebug.lastCall.args).to.deep.equal(['aaa']);
+    expect(mockInfo.lastCall.args).to.deep.equal(['bbb']);
+    expect(mockError.lastCall.args).to.deep.equal(['ccc']);
+  }
+  {
+    // prefix with 'foo'
+    const l = new FormatLogger((_, ...args) => ['foo' as unknown].concat(args));
+    l.log('debug', 'aaa');
+    l.log('info', 'bbb');
+    l.log('error', 'ccc');
+
+    expect(mockDebug.lastCall.args).to.deep.equal(['foo', 'aaa']);
+    expect(mockInfo.lastCall.args).to.deep.equal(['foo', 'bbb']);
+    expect(mockError.lastCall.args).to.deep.equal(['foo', 'ccc']);
+  }
+});
+
+test('nodeLogContext', () => {
+  const mockDebug = mockConsoleMethod('debug');
+  const mockInfo = mockConsoleMethod('info');
+  const mockError = mockConsoleMethod('error');
+
+  {
+    sinon.reset();
+    const l = newNodeLogContext('debug');
+    expect(l.debug).to.be.instanceOf(Function);
+    expect(l.info).to.be.instanceOf(Function);
+    expect(l.error).to.be.instanceOf(Function);
+
+    l.debug?.('ggg');
+    l.info?.('hhh');
+    l.error?.('iii');
+    expect(mockDebug.lastCall.args).to.deep.equal(['DBG', 'ggg']);
+    expect(mockInfo.lastCall.args).to.deep.equal(['INF', 'hhh']);
+    expect(mockError.lastCall.args).to.deep.equal(['ERR', 'iii']);
   }
 });
 
