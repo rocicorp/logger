@@ -23,6 +23,27 @@ export interface LogSink {
   flush?(): Promise<void>;
 }
 
+/**
+ * A [[Logger]] implementation that logs to multiple loggers.
+ */
+export class TeeLogSink implements LogSink {
+  private readonly _sinks: readonly LogSink[];
+
+  constructor(sinks: readonly LogSink[]) {
+    this._sinks = sinks;
+  }
+
+  log(level: LogLevel, ...args: unknown[]): void {
+    for (const logger of this._sinks) {
+      logger.log(level, ...args);
+    }
+  }
+
+  async flush(): Promise<void> {
+    await Promise.all(this._sinks.map((logger) => logger.flush?.()));
+  }
+}
+
 export class OptionalLoggerImpl implements OptionalLogger {
   readonly debug?: (...args: unknown[]) => void = undefined;
   readonly info?: (...args: unknown[]) => void = undefined;
