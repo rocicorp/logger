@@ -193,30 +193,30 @@ test("TeeLogSink", () => {
   const l2 = new TestLogSink();
   const tl = new TeeLogSink([l1, l2]);
 
-  expect(l1.messages).toEqual([]);
-  expect(l2.messages).toEqual([]);
+  expect(l1.messages).to.deep.equal([]);
+  expect(l2.messages).to.deep.equal([]);
 
   tl.log("info", 1, 2);
-  expect(l1.messages).toEqual([["info", 1, 2]]);
-  expect(l2.messages).toEqual([["info", 1, 2]]);
+  expect(l1.messages).to.deep.equal([["info", 1, 2]]);
+  expect(l2.messages).to.deep.equal([["info", 1, 2]]);
 
   tl.log("debug", 3);
-  expect(l1.messages).toEqual([
+  expect(l1.messages).to.deep.equal([
     ["info", 1, 2],
     ["debug", 3],
   ]);
-  expect(l2.messages).toEqual([
+  expect(l2.messages).to.deep.equal([
     ["info", 1, 2],
     ["debug", 3],
   ]);
 
   tl.log("error", 4, 5, 6);
-  expect(l1.messages).toEqual([
+  expect(l1.messages).to.deep.equal([
     ["info", 1, 2],
     ["debug", 3],
     ["error", 4, 5, 6],
   ]);
-  expect(l2.messages).toEqual([
+  expect(l2.messages).to.deep.equal([
     ["info", 1, 2],
     ["debug", 3],
     ["error", 4, 5, 6],
@@ -229,9 +229,9 @@ test("tee logger flush", async () => {
   const l3 = new TestLogSinkWithFlush();
   const tl = new TeeLogSink([l1, l2, l3]);
 
-  expect(l1.flushCount).toEqual(0);
-  expect(l3.flushCount).toEqual(0);
+  expect(l1.flushCount).to.equal(0);
+  expect(l3.flushCount).to.equal(0);
   await tl.flush();
-  expect(l1.flushCount).toEqual(1);
-  expect(l3.flushCount).toEqual(1);
+  expect(l1.flushCount).to.equal(1);
+  expect(l3.flushCount).to.equal(1);
 });
