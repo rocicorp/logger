@@ -24,7 +24,7 @@ export interface LogSink {
 }
 
 /**
- * A [[Logger]] implementation that logs to multiple loggers.
+ * A [[LogSink]] implementation that logs to multiple sinks.
  */
 export class TeeLogSink implements LogSink {
   private readonly _sinks: readonly LogSink[];
