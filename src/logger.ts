@@ -80,7 +80,7 @@ export class ConsoleLogger extends OptionalLoggerImpl {
 }
 
 /**
- * An implementation of [[Logger]] that logs using `console.log` etc
+ * An implementation of [[LogSink]] that logs using `console.log` etc
  */
 export const consoleLogSink: LogSink = {
   log(level: LogLevel, ...args: unknown[]): void {
