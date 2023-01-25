@@ -4,7 +4,8 @@ import {
   FormatLogger,
   LogContext,
   LogSink,
-  NodeConsoleLogger,
+  nodeConsoleLogSink,
+  OptionalLoggerImpl,
   TeeLogSink,
   type LogLevel,
 } from './logger.js';
@@ -100,14 +101,14 @@ test('FormatLogger', () => {
   }
 });
 
-test('NodeConsoleLogger', () => {
+test('nodeConsoleLogSink', () => {
   const mockDebug = mockConsoleMethod('debug');
   const mockInfo = mockConsoleMethod('info');
   const mockError = mockConsoleMethod('error');
 
   {
     sinon.reset();
-    const l = new NodeConsoleLogger('debug');
+    const l = new OptionalLoggerImpl(nodeConsoleLogSink, 'debug');
     expect(l.debug).to.be.instanceOf(Function);
     expect(l.info).to.be.instanceOf(Function);
     expect(l.error).to.be.instanceOf(Function);

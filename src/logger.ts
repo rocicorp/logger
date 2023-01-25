@@ -104,19 +104,13 @@ export class FormatLogger implements LogSink {
 }
 
 /**
- * Create a logger that will log to the console with a prefix,
- * appropriate for the node environment or terminal output.
+ * A console logger that prefixes log lines with a log level.
  */
-export class NodeConsoleLogger extends OptionalLoggerImpl {
-  constructor(level: LogLevel) {
-    const fl = new FormatLogger(
-      (lvl: LogLevel, ...args: unknown[]): unknown[] => {
-        return [logLevelPrefix[lvl], ...args];
-      },
-    );
-    super(fl, level);
-  }
-}
+export const nodeConsoleLogSink: LogSink = {
+  log(level: LogLevel, ...args: unknown[]): void {
+    console[level](logLevelPrefix[level], ...args);
+  },
+};
 
 /**
  * Log line level prefixes, used by the node logger. They are uniform length
