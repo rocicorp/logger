@@ -4,7 +4,7 @@ import {
   FormatLogger,
   LogContext,
   LogSink,
-  newNodeLogContext,
+  NodeConsoleLogger,
   TeeLogSink,
   type LogLevel,
 } from './logger.js';
@@ -100,14 +100,14 @@ test('FormatLogger', () => {
   }
 });
 
-test('nodeLogContext', () => {
+test('NodeConsoleLogger', () => {
   const mockDebug = mockConsoleMethod('debug');
   const mockInfo = mockConsoleMethod('info');
   const mockError = mockConsoleMethod('error');
 
   {
     sinon.reset();
-    const l = newNodeLogContext('debug');
+    const l = new NodeConsoleLogger('debug');
     expect(l.debug).to.be.instanceOf(Function);
     expect(l.info).to.be.instanceOf(Function);
     expect(l.error).to.be.instanceOf(Function);
@@ -188,7 +188,7 @@ class TestLogSinkWithFlush extends TestLogSink {
   }
 }
 
-test("TeeLogSink", () => {
+test('TeeLogSink', () => {
   const l1 = new TestLogSink();
   const l2 = new TestLogSink();
   const tl = new TeeLogSink([l1, l2]);
@@ -196,34 +196,34 @@ test("TeeLogSink", () => {
   expect(l1.messages).to.deep.equal([]);
   expect(l2.messages).to.deep.equal([]);
 
-  tl.log("info", 1, 2);
-  expect(l1.messages).to.deep.equal([["info", 1, 2]]);
-  expect(l2.messages).to.deep.equal([["info", 1, 2]]);
+  tl.log('info', 1, 2);
+  expect(l1.messages).to.deep.equal([['info', 1, 2]]);
+  expect(l2.messages).to.deep.equal([['info', 1, 2]]);
 
-  tl.log("debug", 3);
+  tl.log('debug', 3);
   expect(l1.messages).to.deep.equal([
-    ["info", 1, 2],
-    ["debug", 3],
+    ['info', 1, 2],
+    ['debug', 3],
   ]);
   expect(l2.messages).to.deep.equal([
-    ["info", 1, 2],
-    ["debug", 3],
+    ['info', 1, 2],
+    ['debug', 3],
   ]);
 
-  tl.log("error", 4, 5, 6);
+  tl.log('error', 4, 5, 6);
   expect(l1.messages).to.deep.equal([
-    ["info", 1, 2],
-    ["debug", 3],
-    ["error", 4, 5, 6],
+    ['info', 1, 2],
+    ['debug', 3],
+    ['error', 4, 5, 6],
   ]);
   expect(l2.messages).to.deep.equal([
-    ["info", 1, 2],
-    ["debug", 3],
-    ["error", 4, 5, 6],
+    ['info', 1, 2],
+    ['debug', 3],
+    ['error', 4, 5, 6],
   ]);
 });
 
-test("tee logger flush", async () => {
+test('tee logger flush', async () => {
   const l1 = new TestLogSinkWithFlush();
   const l2 = new TestLogSink();
   const l3 = new TestLogSinkWithFlush();

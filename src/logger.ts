@@ -40,7 +40,7 @@ export class TeeLogSink implements LogSink {
   }
 
   async flush(): Promise<void> {
-    await Promise.all(this._sinks.map((logger) => logger.flush?.()));
+    await Promise.all(this._sinks.map(logger => logger.flush?.()));
   }
 }
 
@@ -104,16 +104,18 @@ export class FormatLogger implements LogSink {
 }
 
 /**
- * Instantiates a new console LogContext logger appropriate for the node
- * environment.
+ * Create a logger that will log to the console with a prefix,
+ * appropriate for the node environment or terminal output.
  */
-export function newNodeLogContext(level: LogLevel): LogContext {
-  const fl = new FormatLogger(
-    (lvl: LogLevel, ...args: unknown[]): unknown[] => {
-      return [logLevelPrefix[lvl], ...args];
-    },
-  );
-  return new LogContext(level, fl);
+export class NodeConsoleLogger extends OptionalLoggerImpl {
+  constructor(level: LogLevel) {
+    const fl = new FormatLogger(
+      (lvl: LogLevel, ...args: unknown[]): unknown[] => {
+        return [logLevelPrefix[lvl], ...args];
+      },
+    );
+    super(fl, level);
+  }
 }
 
 /**
