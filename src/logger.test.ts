@@ -1,6 +1,7 @@
-import {expect} from 'chai';
+import {expect, assert} from 'chai';
 import {
   ConsoleLogger,
+  consoleLogSink,
   FormatLogger,
   LogContext,
   LogSink,
@@ -235,4 +236,15 @@ test('tee logger flush', async () => {
   await tl.flush();
   expect(l1.flushCount).to.equal(1);
   expect(l3.flushCount).to.equal(1);
+});
+
+test('Console logger calls JSON stringify on complex arguments', () => {
+  const jsonStringifySpy = sinon.spy(JSON, 'stringify');
+  const mockDebug = mockConsoleMethod('debug');
+  consoleLogSink.log('debug', 'a', false, 123, {b: 1}, [2, 3]);
+  assert(mockDebug.calledOnce);
+  assert(mockDebug.calledWith('a', false, 123, '{"b":1}', '[2,3]'));
+  assert.equal(jsonStringifySpy.callCount, 2);
+  assert.deepEqual(jsonStringifySpy.getCall(0).args, [{b: 1}]);
+  assert.deepEqual(jsonStringifySpy.getCall(1).args, [[2, 3]]);
 });

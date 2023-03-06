@@ -84,7 +84,7 @@ export class ConsoleLogger extends OptionalLoggerImpl {
  */
 export const consoleLogSink: LogSink = {
   log(level: LogLevel, ...args: unknown[]): void {
-    console[level](...args);
+    console[level](...args.map(normalizeArgument));
   },
 };
 
@@ -161,4 +161,24 @@ export class LogContext extends OptionalLoggerImpl {
     };
     return new LogContext(this._level, logSink);
   }
+}
+
+function normalizeArgument(
+  v: unknown,
+): string | number | boolean | null | undefined | symbol | bigint {
+  switch (typeof v) {
+    case 'string':
+    case 'number':
+    case 'boolean':
+    case 'undefined':
+    case 'symbol':
+    case 'bigint':
+      return v;
+    case 'object':
+      if (v === null) {
+        return null;
+      }
+      break;
+  }
+  return JSON.stringify(v);
 }
