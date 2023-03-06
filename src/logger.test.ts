@@ -248,3 +248,15 @@ test('Console logger calls JSON stringify on complex arguments', () => {
   assert.deepEqual(jsonStringifySpy.getCall(0).args, [{b: 1}]);
   assert.deepEqual(jsonStringifySpy.getCall(1).args, [[2, 3]]);
 });
+
+test('newNodeLogContext calls JSON stringify on complex arguments', () => {
+  const jsonStringifySpy = sinon.spy(JSON, 'stringify');
+  const mockDebug = mockConsoleMethod('debug');
+  const lc = newNodeLogContext('debug');
+  lc.debug?.('a', false, 123, {b: 1}, [2, 3]);
+  assert(mockDebug.calledOnce);
+  assert(mockDebug.calledWith('DBG', 'a', false, 123, '{"b":1}', '[2,3]'));
+  assert.equal(jsonStringifySpy.callCount, 2);
+  assert.deepEqual(jsonStringifySpy.getCall(0).args, [{b: 1}]);
+  assert.deepEqual(jsonStringifySpy.getCall(1).args, [[2, 3]]);
+});
