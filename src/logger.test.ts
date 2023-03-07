@@ -1,6 +1,7 @@
-import {expect} from 'chai';
+import {expect, assert} from 'chai';
 import {
   ConsoleLogger,
+  consoleLogSink,
   FormatLogger,
   LogContext,
   LogSink,
@@ -236,3 +237,70 @@ test('tee logger flush', async () => {
   expect(l1.flushCount).to.equal(1);
   expect(l3.flushCount).to.equal(1);
 });
+
+test('Console logger calls JSON stringify on complex arguments', () => {
+  const jsonStringifySpy = sinon.spy(JSON, 'stringify');
+  const mockDebug = mockConsoleMethod('debug');
+  consoleLogSink.log('debug', 'a', false, 123, {b: 1}, [2, 3]);
+  assert(mockDebug.calledOnce);
+  assert.deepEqual(mockDebug.firstCall.args, [
+    'a',
+    false,
+    123,
+    '{"b":1}',
+    '[2,3]',
+  ]);
+  assert.equal(jsonStringifySpy.callCount, 2);
+  assert.deepEqual(jsonStringifySpy.getCall(0).firstArg, {b: 1});
+  assert.deepEqual(jsonStringifySpy.getCall(1).firstArg, [2, 3]);
+
+  mockDebug.resetHistory();
+
+  consoleLogSink.log('debug', new Error('a', {cause: new TypeError('b')}));
+  assert(mockDebug.calledOnce);
+
+  testNormalizeError(mockDebug.firstCall.firstArg);
+});
+
+test('nodeConsoleSink calls JSON stringify on complex arguments', () => {
+  const jsonStringifySpy = sinon.spy(JSON, 'stringify');
+  const mockDebug = mockConsoleMethod('debug');
+  nodeConsoleLogSink.log('debug', 'a', false, 123, {b: 1}, [2, 3]);
+  assert(mockDebug.calledOnce);
+  assert.deepEqual(mockDebug.firstCall.args, [
+    'DBG',
+    'a',
+    false,
+    123,
+    '{"b":1}',
+    '[2,3]',
+  ]);
+  assert.equal(jsonStringifySpy.callCount, 2);
+  assert.deepEqual(jsonStringifySpy.getCall(0).firstArg, {b: 1});
+  assert.deepEqual(jsonStringifySpy.getCall(1).firstArg, [2, 3]);
+
+  mockDebug.resetHistory();
+
+  nodeConsoleLogSink.log('debug', new Error('a', {cause: new TypeError('b')}));
+  assert(mockDebug.calledOnce);
+
+  testNormalizeError(mockDebug.firstCall.args[1]);
+});
+
+function testNormalizeError(stringifiedError: string) {
+  const obj = JSON.parse(stringifiedError);
+  assert(typeof obj.stack === 'string');
+  const {cause} = obj;
+  delete obj.stack;
+  delete obj.cause;
+  assert.deepEqual(obj, {
+    message: 'a',
+    name: 'Error',
+  });
+  assert(typeof cause.stack === 'string');
+  delete cause.stack;
+  assert.deepEqual(cause, {
+    message: 'b',
+    name: 'TypeError',
+  });
+}

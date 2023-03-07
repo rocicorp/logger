@@ -84,7 +84,7 @@ export class ConsoleLogger extends OptionalLoggerImpl {
  */
 export const consoleLogSink: LogSink = {
   log(level: LogLevel, ...args: unknown[]): void {
-    console[level](...args);
+    console[level](...args.map(normalizeArgument));
   },
 };
 
@@ -108,7 +108,7 @@ export class FormatLogger implements LogSink {
  */
 export const nodeConsoleLogSink: LogSink = {
   log(level: LogLevel, ...args: unknown[]): void {
-    console[level](logLevelPrefix[level], ...args);
+    console[level](logLevelPrefix[level], ...args.map(normalizeArgument));
   },
 };
 
@@ -161,4 +161,36 @@ export class LogContext extends OptionalLoggerImpl {
     };
     return new LogContext(this._level, logSink);
   }
+}
+
+function normalizeArgument(
+  v: unknown,
+): string | number | boolean | null | undefined | symbol | bigint {
+  switch (typeof v) {
+    case 'string':
+    case 'number':
+    case 'boolean':
+    case 'undefined':
+    case 'symbol':
+    case 'bigint':
+      return v;
+    case 'object':
+      if (v === null) {
+        return null;
+      }
+      break;
+  }
+  return JSON.stringify(v, errorReplacer);
+}
+
+function errorReplacer(_key: string | symbol, v: unknown) {
+  if (v instanceof Error) {
+    return {
+      name: v.name,
+      message: v.message,
+      stack: v.stack,
+      ...('cause' in v ? {cause: v.cause} : null),
+    };
+  }
+  return v;
 }
