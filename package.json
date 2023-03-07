@@ -4,6 +4,9 @@
   "version": "4.0.0",
   "repository": "github:rocicorp/logger",
   "license": "Apache-2.0",
+  "engines": {
+    "node": "^14.13.1 || >=16.0.0"
+  },
   "scripts": {
     "test": "mocha --ui=tdd out/*.test.js",
     "pretest": "npm run build",

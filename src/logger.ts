@@ -108,7 +108,7 @@ export class FormatLogger implements LogSink {
  */
 export const nodeConsoleLogSink: LogSink = {
   log(level: LogLevel, ...args: unknown[]): void {
-    console[level](logLevelPrefix[level], ...args);
+    console[level](logLevelPrefix[level], ...args.map(normalizeArgument));
   },
 };
 
@@ -180,5 +180,17 @@ function normalizeArgument(
       }
       break;
   }
-  return JSON.stringify(v);
+  return JSON.stringify(v, errorReplacer);
+}
+
+function errorReplacer(_key: string | symbol, v: unknown) {
+  if (v instanceof Error) {
+    return {
+      name: v.name,
+      message: v.message,
+      stack: v.stack,
+      ...('cause' in v ? {cause: v.cause} : null),
+    };
+  }
+  return v;
 }
