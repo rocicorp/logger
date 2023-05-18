@@ -151,7 +151,7 @@ export class SilentLogger implements OptionalLogger {}
  *
  *   const lc = new LogContext('debug');
  *   lc.debug?.('hello');
- *   const lc2 = lc.addContext('foo');
+ *   const lc2 = lc.withContext('foo');
  *   f(lc2);  // logging inside f will contain 'foo' in the Context.
  */
 export class LogContext extends OptionalLoggerImpl {
@@ -174,7 +174,7 @@ export class LogContext extends OptionalLoggerImpl {
    * Creates a new Logger that with the given key and value
    * added to the logged Context.
    */
-  addContext(key: string, value?: unknown): LogContext {
+  withContext(key: string, value?: unknown): LogContext {
     const ctx = {...this._context, [key]: value};
     return new LogContext(this._level, this._logSink, ctx);
   }

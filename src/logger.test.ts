@@ -131,15 +131,15 @@ test('LogContext formatting', () => {
   lc.debug?.('aaa');
   expect(mockDebug.lastCall.args).to.deep.equal(['aaa']);
 
-  const lc2 = new LogContext('debug').addContext('bbb');
+  const lc2 = new LogContext('debug').withContext('bbb');
   lc2.debug?.('ccc');
   expect(mockDebug.lastCall.args).to.deep.equal(['bbb', 'ccc']);
 
-  const lc3 = lc2.addContext('ddd');
+  const lc3 = lc2.withContext('ddd');
   lc3.debug?.('eee');
   expect(mockDebug.lastCall.args).to.deep.equal(['bbb', 'ddd', 'eee']);
 
-  const lc4 = lc2.addContext('fff', 'ggg');
+  const lc4 = lc2.withContext('fff', 'ggg');
   lc4.debug?.('hhh');
   expect(mockDebug.lastCall.args).to.deep.equal(['bbb', 'fff=ggg', 'hhh']);
 });
@@ -165,11 +165,11 @@ test('Optional tag', () => {
   lc.debug?.('a');
   expect(mockDebug.lastCall.args).to.deep.equal(['a']);
 
-  const lc2 = lc.addContext('b');
+  const lc2 = lc.withContext('b');
   lc2.debug?.('c');
   expect(mockDebug.lastCall.args).to.deep.equal(['b', 'c']);
 
-  const lc3 = lc.addContext('d', 'e');
+  const lc3 = lc.withContext('d', 'e');
   lc3.debug?.('f');
   expect(mockDebug.lastCall.args).to.deep.equal(['d=e', 'f']);
 });
@@ -237,9 +237,9 @@ test('Context-aware LogSink', () => {
   const lc = new LogContext('debug', sink);
 
   lc.info?.(1, 2);
-  lc.addContext('foo', {bar: 'baz'}).debug?.(3, 4);
-  lc.addContext('boo', 'oof').info?.(5, 6);
-  lc.addContext('abc', 'is').addContext('easy', 'as').info?.(1, 2, 3);
+  lc.withContext('foo', {bar: 'baz'}).debug?.(3, 4);
+  lc.withContext('boo', 'oof').info?.(5, 6);
+  lc.withContext('abc', 'is').withContext('easy', 'as').info?.(1, 2, 3);
   lc.debug?.(7, 8);
 
   expect(sink.messages).to.deep.equal([
