@@ -161,8 +161,8 @@ export class LogContext extends OptionalLoggerImpl {
 
   constructor(
     level: LogLevel = 'info',
-    logSink: LogSink = consoleLogSink,
     context?: Context,
+    logSink: LogSink = consoleLogSink,
   ) {
     super(logSink, level, context);
     this._level = level;
@@ -176,7 +176,7 @@ export class LogContext extends OptionalLoggerImpl {
    */
   withContext(key: string, value?: unknown): LogContext {
     const ctx = {...this._context, [key]: value};
-    return new LogContext(this._level, this._logSink, ctx);
+    return new LogContext(this._level, ctx, this._logSink);
   }
 }
 

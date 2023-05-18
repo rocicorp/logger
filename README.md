@@ -21,17 +21,17 @@ import {LogContext} from '@rocicorp/logger';
 const lc = new LogContext('info');
 lc.info('hello'); // prints "hello"
 
-const lc2 = new LogContext('info', 'name');
-lc.info('hello'); // prints "name hello"
+const lc2 = new LogContext('info', {name: 'alice'});
+lc.info('hello'); // prints "name=alice hello"
 
 const lc3 = lc2.withContext('bbb');
-lc3.info('hello'); // prints "name bbb hello"
+lc3.info('hello'); // prints "name=alice bbb hello"
 
 const lc4 = lc3.withContext('ccc');
-lc4.info('hello'); // prints "name bbb ccc hello"
+lc4.info('hello'); // prints "name=alice bbb ccc hello"
 
 const lc5 = lc4.withContext('ddd', 'eee');
-lc5.info('hello'); // prints "name bbb ccc ddd=eee hello"
+lc5.info('hello'); // prints "name=alice bbb ccc ddd=eee hello"
 
 // Or get a context logger appropriate for the Node environment.
 const nlc = newNodeLogContext('debug');

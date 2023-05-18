@@ -234,7 +234,7 @@ test('Context-aware LogSink', () => {
 
   expect(sink.messages).to.deep.equal([]);
 
-  const lc = new LogContext('debug', sink);
+  const lc = new LogContext('debug', undefined, sink);
 
   lc.info?.(1, 2);
   lc.withContext('foo', {bar: 'baz'}).debug?.(3, 4);
