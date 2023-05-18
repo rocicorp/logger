@@ -2,6 +2,7 @@ import {expect, assert} from 'chai';
 import {
   ConsoleLogger,
   consoleLogSink,
+  Context,
   FormatLogger,
   LogContext,
   LogSink,
@@ -189,6 +190,42 @@ class TestLogSinkWithFlush extends TestLogSink {
     return Promise.resolve();
   }
 }
+
+class TestLogSinkWithContext implements LogSink {
+  messages: [LogLevel, ...unknown[]][] = [];
+  messagesWithContext: [LogLevel, Context, ...unknown[]][] = [];
+
+  log(level: LogLevel, ...args: unknown[]): void {
+    this.messages.push([level, ...args]);
+  }
+
+  logWithContext(level: LogLevel, ctx: Context, ...args: unknown[]): void {
+    this.messagesWithContext.push([level, ctx, ...args]);
+  }
+}
+
+test('logWithContext', () => {
+  const sink = new TestLogSinkWithContext();
+
+  expect(sink.messages).to.deep.equal([]);
+  expect(sink.messagesWithContext).to.deep.equal([]);
+
+  const lc = new LogContext('debug', sink);
+
+  lc.info?.(1, 2);
+  lc.addContext('foo', {bar: 'baz'}).debug?.(3, 4);
+  lc.addContext('boo', 'oof').info?.(5, 6);
+  lc.debug?.(7, 8);
+
+  expect(sink.messages).to.deep.equal([
+    ['info', 1, 2],
+    ['debug', 7, 8],
+  ]);
+  expect(sink.messagesWithContext).to.deep.equal([
+    ['debug', {foo: {bar: 'baz'}}, 3, 4],
+    ['info', {boo: 'oof'}, 5, 6],
+  ]);
+});
 
 test('TeeLogSink', () => {
   const l1 = new TestLogSink();
