@@ -175,12 +175,10 @@ test('Optional tag', () => {
 });
 
 class TestLogSink implements LogSink {
-  // Note: Order in messages is different from log args order to verify
-  // that Context isn't just one of the args.
-  messages: [Context | undefined, LogLevel, ...unknown[]][] = [];
+  messages: [LogLevel, Context | undefined, unknown[]][] = [];
 
   log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void {
-    this.messages.push([context, level, ...args]);
+    this.messages.push([level, context, args]);
   }
 }
 
@@ -203,29 +201,29 @@ test('TeeLogSink', () => {
   expect(l2.messages).to.deep.equal([]);
 
   tl.log('info', ctx, 1, 2);
-  expect(l1.messages).to.deep.equal([[ctx, 'info', 1, 2]]);
-  expect(l2.messages).to.deep.equal([[ctx, 'info', 1, 2]]);
+  expect(l1.messages).to.deep.equal([['info', ctx, [1, 2]]]);
+  expect(l2.messages).to.deep.equal([['info', ctx, [1, 2]]]);
 
   tl.log('debug', ctx, 3);
   expect(l1.messages).to.deep.equal([
-    [ctx, 'info', 1, 2],
-    [ctx, 'debug', 3],
+    ['info', ctx, [1, 2]],
+    ['debug', ctx, [3]],
   ]);
   expect(l2.messages).to.deep.equal([
-    [ctx, 'info', 1, 2],
-    [ctx, 'debug', 3],
+    ['info', ctx, [1, 2]],
+    ['debug', ctx, [3]],
   ]);
 
   tl.log('error', ctx, 4, 5, 6);
   expect(l1.messages).to.deep.equal([
-    [ctx, 'info', 1, 2],
-    [ctx, 'debug', 3],
-    [ctx, 'error', 4, 5, 6],
+    ['info', ctx, [1, 2]],
+    ['debug', ctx, [3]],
+    ['error', ctx, [4, 5, 6]],
   ]);
   expect(l2.messages).to.deep.equal([
-    [ctx, 'info', 1, 2],
-    [ctx, 'debug', 3],
-    [ctx, 'error', 4, 5, 6],
+    ['info', ctx, [1, 2]],
+    ['debug', ctx, [3]],
+    ['error', ctx, [4, 5, 6]],
   ]);
 });
 
@@ -243,11 +241,11 @@ test('Context-aware LogSink', () => {
   lc.debug?.(7, 8);
 
   expect(sink.messages).to.deep.equal([
-    [undefined, 'info', 1, 2],
-    [{foo: {bar: 'baz'}}, 'debug', 3, 4],
-    [{boo: 'oof'}, 'info', 5, 6],
-    [{abc: 'is', easy: 'as'}, 'info', 1, 2, 3],
-    [undefined, 'debug', 7, 8],
+    ['info', undefined, [1, 2]],
+    ['debug', {foo: {bar: 'baz'}}, [3, 4]],
+    ['info', {boo: 'oof'}, [5, 6]],
+    ['info', {abc: 'is', easy: 'as'}, [1, 2, 3]],
+    ['debug', undefined, [7, 8]],
   ]);
 });
 

@@ -110,9 +110,7 @@ export class FormatLogger implements LogSink {
   }
 
   log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void {
-    console[level](
-      ...this._format(level, ...stringified(context).concat(args)),
-    );
+    console[level](...this._format(level, ...stringified(context), ...args));
   }
 }
 
@@ -123,7 +121,8 @@ export const nodeConsoleLogSink: LogSink = {
   log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void {
     console[level](
       logLevelPrefix[level],
-      ...stringified(context).concat(args).map(normalizeArgument),
+      ...stringified(context),
+      ...args.map(normalizeArgument),
     );
   },
 };
@@ -157,7 +156,7 @@ export class SilentLogger implements OptionalLogger {}
 export class LogContext extends OptionalLoggerImpl {
   private readonly _logSink: LogSink;
   private readonly _level: LogLevel;
-  private readonly _context?: Context;
+  private readonly _context: Context | undefined;
 
   constructor(
     level: LogLevel = 'info',
