@@ -95,7 +95,7 @@ export class ConsoleLogger extends OptionalLoggerImpl {
  */
 export const consoleLogSink: LogSink = {
   log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void {
-    console[level](...stringified(context).concat(args).map(normalizeArgument));
+    console[level](...stringified(context), ...args.map(normalizeArgument));
   },
 };
 
