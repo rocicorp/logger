@@ -18,8 +18,19 @@ export interface OptionalLogger {
  */
 export type LogLevel = 'error' | 'info' | 'debug';
 
+/**
+ * A Context ferries additional information that can be associated with
+ * each logged message. The handling of the information in the Context is
+ * specific to the LogSink; text-only implementations generally prepend
+ * stringified representations of the Context's properties to the logged
+ * message.
+ */
+export type Context = {
+  [key: string]: unknown | undefined;
+};
+
 export interface LogSink {
-  log(level: LogLevel, ...args: unknown[]): void;
+  log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void;
   flush?(): Promise<void>;
 }
 
@@ -33,9 +44,9 @@ export class TeeLogSink implements LogSink {
     this._sinks = sinks;
   }
 
-  log(level: LogLevel, ...args: unknown[]): void {
+  log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void {
     for (const logger of this._sinks) {
-      logger.log(level, ...args);
+      logger.log(level, context, ...args);
     }
   }
 
@@ -49,11 +60,11 @@ export class OptionalLoggerImpl implements OptionalLogger {
   readonly info?: (...args: unknown[]) => void = undefined;
   readonly error?: (...args: unknown[]) => void = undefined;
 
-  constructor(logSink: LogSink, level: LogLevel = 'info') {
+  constructor(logSink: LogSink, level: LogLevel = 'info', context?: Context) {
     const impl =
       (level: LogLevel) =>
       (...args: unknown[]) =>
-        logSink.log(level, ...args);
+        logSink.log(level, context, ...args);
 
     /* eslint-disable no-fallthrough , @typescript-eslint/ban-ts-comment */
     switch (level) {
@@ -74,8 +85,8 @@ export class OptionalLoggerImpl implements OptionalLogger {
  * Create a logger that will log to the console.
  */
 export class ConsoleLogger extends OptionalLoggerImpl {
-  constructor(level: LogLevel) {
-    super(consoleLogSink, level);
+  constructor(level: LogLevel, context?: Context) {
+    super(consoleLogSink, level, context);
   }
 }
 
@@ -83,8 +94,8 @@ export class ConsoleLogger extends OptionalLoggerImpl {
  * An implementation of [[LogSink]] that logs using `console.log` etc
  */
 export const consoleLogSink: LogSink = {
-  log(level: LogLevel, ...args: unknown[]): void {
-    console[level](...args.map(normalizeArgument));
+  log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void {
+    console[level](...stringified(context), ...args.map(normalizeArgument));
   },
 };
 
@@ -98,8 +109,8 @@ export class FormatLogger implements LogSink {
     this._format = format;
   }
 
-  log(level: LogLevel, ...args: unknown[]): void {
-    console[level](...this._format(level, ...args));
+  log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void {
+    console[level](...this._format(level, ...stringified(context), ...args));
   }
 }
 
@@ -107,8 +118,12 @@ export class FormatLogger implements LogSink {
  * A console logger that prefixes log lines with a log level.
  */
 export const nodeConsoleLogSink: LogSink = {
-  log(level: LogLevel, ...args: unknown[]): void {
-    console[level](logLevelPrefix[level], ...args.map(normalizeArgument));
+  log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void {
+    console[level](
+      logLevelPrefix[level],
+      ...stringified(context),
+      ...args.map(normalizeArgument),
+    );
   },
 };
 
@@ -128,39 +143,49 @@ export const logLevelPrefix = {
 export class SilentLogger implements OptionalLogger {}
 
 /**
- * The LogContext carries a contextual tag around and it prefixes the log
- * messages with a tag.
+ * The LogContext facilitates constructing and adding to the
+ * Context passed to the LogSink.
  *
  * Typical usage is something like:
  *
  *   const lc = new LogContext('debug');
  *   lc.debug?.('hello');
- *   const lc2 = lc.addContext('foo');
- *   f(lc2);  // logging inside f will be prefixed with 'foo'
+ *   const lc2 = lc.withContext('foo');
+ *   f(lc2);  // logging inside f will contain 'foo' in the Context.
  */
 export class LogContext extends OptionalLoggerImpl {
   private readonly _logSink: LogSink;
   private readonly _level: LogLevel;
+  private readonly _context: Context | undefined;
 
-  constructor(level: LogLevel = 'info', logSink: LogSink = consoleLogSink) {
-    super(logSink, level);
+  constructor(
+    level: LogLevel = 'info',
+    context?: Context,
+    logSink: LogSink = consoleLogSink,
+  ) {
+    super(logSink, level, context);
     this._level = level;
     this._logSink = logSink;
+    this._context = context;
   }
 
   /**
-   * Creates a new Logger that will prefix all log messages with the given key
-   * and value.
+   * Creates a new Logger that with the given key and value
+   * added to the logged Context.
    */
-  addContext(key: string, value?: unknown): LogContext {
-    const ctx = value === undefined ? key : `${key}=${value}`;
-    const logSink: LogSink = {
-      log: (level, ...args) => {
-        this._logSink.log(level, ctx, ...args);
-      },
-    };
-    return new LogContext(this._level, logSink);
+  withContext(key: string, value?: unknown): LogContext {
+    const ctx = {...this._context, [key]: value};
+    return new LogContext(this._level, ctx, this._logSink);
   }
+}
+
+function stringified(context: Context | undefined): unknown[] {
+  const args = [];
+  for (const [k, v] of Object.entries(context ?? {})) {
+    const arg = v === undefined ? k : `${k}=${v}`;
+    args.push(arg);
+  }
+  return args;
 }
 
 function normalizeArgument(
