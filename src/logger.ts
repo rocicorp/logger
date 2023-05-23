@@ -9,6 +9,7 @@ export interface OptionalLogger {
   error?(...args: unknown[]): void;
   info?(...args: unknown[]): void;
   debug?(...args: unknown[]): void;
+  flush?(): Promise<void>;
 }
 
 /**
@@ -59,6 +60,7 @@ export class OptionalLoggerImpl implements OptionalLogger {
   readonly debug?: (...args: unknown[]) => void = undefined;
   readonly info?: (...args: unknown[]) => void = undefined;
   readonly error?: (...args: unknown[]) => void = undefined;
+  readonly flush: () => Promise<void>;
 
   constructor(logSink: LogSink, level: LogLevel = 'info', context?: Context) {
     const impl =
@@ -78,6 +80,8 @@ export class OptionalLoggerImpl implements OptionalLogger {
         this.error = impl('error');
     }
     /* eslint-enable @typescript-eslint/ban-ts-comment, no-fallthrough */
+
+    this.flush = () => logSink.flush?.() ?? Promise.resolve();
   }
 }
 
