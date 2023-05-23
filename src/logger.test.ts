@@ -262,6 +262,15 @@ test('tee logger flush', async () => {
   expect(l3.flushCount).to.equal(1);
 });
 
+test('optional logger flush', async () => {
+  const l1 = new TestLogSinkWithFlush();
+  const logger = new OptionalLoggerImpl(l1);
+
+  expect(l1.flushCount).to.equal(0);
+  await logger.flush();
+  expect(l1.flushCount).to.equal(1);
+});
+
 test('Console logger calls JSON stringify on complex arguments', () => {
   const jsonStringifySpy = sinon.spy(JSON, 'stringify');
   const mockDebug = mockConsoleMethod('debug');
