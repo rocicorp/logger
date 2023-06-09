@@ -9,12 +9,10 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
-
-    "importsNotUsedAsValues": "error",
-
+    "exactOptionalPropertyTypes": true,
     "declaration": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "outDir": "out",
     "allowJs": true,
     // esnext for Object.fromEntries
