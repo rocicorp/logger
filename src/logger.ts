@@ -6,10 +6,10 @@
  * only [[error]] will be present.
  */
 export interface OptionalLogger {
-  error?(...args: unknown[]): void;
-  info?(...args: unknown[]): void;
-  debug?(...args: unknown[]): void;
-  flush?(): Promise<void>;
+  error?: ((...args: unknown[]) => void) | undefined;
+  info?: ((...args: unknown[]) => void) | undefined;
+  debug?: ((...args: unknown[]) => void) | undefined;
+  flush?: (() => Promise<void>) | undefined;
 }
 
 /**
@@ -57,9 +57,9 @@ export class TeeLogSink implements LogSink {
 }
 
 export class OptionalLoggerImpl implements OptionalLogger {
-  readonly debug?: (...args: unknown[]) => void = undefined;
-  readonly info?: (...args: unknown[]) => void = undefined;
-  readonly error?: (...args: unknown[]) => void = undefined;
+  readonly debug?: ((...args: unknown[]) => void) | undefined = undefined;
+  readonly info?: ((...args: unknown[]) => void) | undefined = undefined;
+  readonly error?: ((...args: unknown[]) => void) | undefined = undefined;
   readonly flush: () => Promise<void>;
 
   constructor(logSink: LogSink, level: LogLevel = 'info', context?: Context) {
