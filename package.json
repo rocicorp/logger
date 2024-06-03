@@ -29,6 +29,7 @@
   "type": "module",
   "types": "out/logger.d.ts",
   "module": "out/logger.js",
+  "main": "out/logger.js",
   "exports": {
     ".": "./out/logger.js"
   },
