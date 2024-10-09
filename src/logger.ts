@@ -8,6 +8,7 @@
 export interface OptionalLogger {
   error?: ((...args: unknown[]) => void) | undefined;
   info?: ((...args: unknown[]) => void) | undefined;
+  warn?: ((...args: unknown[]) => void) | undefined;
   debug?: ((...args: unknown[]) => void) | undefined;
   flush?: (() => Promise<void>) | undefined;
 }
@@ -17,7 +18,7 @@ export interface OptionalLogger {
  * `'error'` > `'info'` > `'debug'`... meaning `'error'` has highest priority
  * and `'debug'` lowest.
  */
-export type LogLevel = 'error' | 'info' | 'debug';
+export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 
 /**
  * A Context ferries additional information that can be associated with
@@ -59,6 +60,7 @@ export class TeeLogSink implements LogSink {
 export class OptionalLoggerImpl implements OptionalLogger {
   readonly debug?: ((...args: unknown[]) => void) | undefined = undefined;
   readonly info?: ((...args: unknown[]) => void) | undefined = undefined;
+  readonly warn?: ((...args: unknown[]) => void) | undefined = undefined;
   readonly error?: ((...args: unknown[]) => void) | undefined = undefined;
   readonly flush: () => Promise<void>;
 
@@ -76,6 +78,10 @@ export class OptionalLoggerImpl implements OptionalLogger {
       // @ts-ignore
       case 'info':
         this.info = impl('info');
+      // @ts-ignore
+      case 'warn':
+        this.warn = impl('warn');
+      // @ts-ignore
       case 'error':
         this.error = impl('error');
     }
@@ -137,6 +143,7 @@ export const nodeConsoleLogSink: LogSink = {
  */
 export const logLevelPrefix = {
   error: 'ERR',
+  warn: 'WRN',
   info: 'INF',
   debug: 'DBG',
 };
