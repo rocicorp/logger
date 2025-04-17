@@ -17,6 +17,7 @@ module.exports = {
         leadingUnderscore: 'forbid',
       },
     ],
+    '@typescript-eslint/no-invalid-void-type': ['off'],
     'eqeqeq': 'error',
     'no-var': 'error',
     'object-shorthand': 'error',
