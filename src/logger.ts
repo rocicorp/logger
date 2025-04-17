@@ -5,11 +5,16 @@
  * then [[error]] and [[info]] should be present and if [[LogLevel]] is 'error'
  * only [[error]] will be present.
  */
-export interface OptionalLogger {
-  error?: ((...args: unknown[]) => void) | undefined;
-  info?: ((...args: unknown[]) => void) | undefined;
-  warn?: ((...args: unknown[]) => void) | undefined;
-  debug?: ((...args: unknown[]) => void) | undefined;
+export interface OptionalLogger<
+  Error extends unknown[] = unknown[],
+  Warn extends unknown[] = unknown[],
+  Info extends unknown[] = unknown[],
+  Debug extends unknown[] = unknown[],
+> {
+  error?: ((...args: Error) => void) | undefined;
+  info?: ((...args: Info) => void) | undefined;
+  warn?: ((...args: Warn) => void) | undefined;
+  debug?: ((...args: Debug) => void) | undefined;
   flush?: (() => Promise<void>) | undefined;
 }
 
@@ -31,7 +36,16 @@ export type Context = {
   [key: string]: unknown | undefined;
 };
 
-export interface LogSink {
+export interface LogSink<
+  Error extends unknown[] = unknown[],
+  Warn extends unknown[] = unknown[],
+  Info extends unknown[] = unknown[],
+  Debug extends unknown[] = unknown[],
+> {
+  log(level: 'error', context: Context | undefined, ...args: Error): void;
+  log(level: 'warn', context: Context | undefined, ...args: Warn): void;
+  log(level: 'info', context: Context | undefined, ...args: Info): void;
+  log(level: 'debug', context: Context | undefined, ...args: Debug): void;
   log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void;
   flush?(): Promise<void>;
 }
@@ -39,7 +53,13 @@ export interface LogSink {
 /**
  * A [[LogSink]] implementation that logs to multiple sinks.
  */
-export class TeeLogSink implements LogSink {
+export class TeeLogSink<
+  Error extends unknown[] = unknown[],
+  Warn extends unknown[] = unknown[],
+  Info extends unknown[] = unknown[],
+  Debug extends unknown[] = unknown[],
+> implements LogSink<Error, Warn, Info, Debug>
+{
   readonly #sinks: readonly LogSink[];
 
   constructor(sinks: readonly LogSink[]) {
@@ -57,14 +77,24 @@ export class TeeLogSink implements LogSink {
   }
 }
 
-export class OptionalLoggerImpl implements OptionalLogger {
-  readonly debug?: ((...args: unknown[]) => void) | undefined = undefined;
-  readonly info?: ((...args: unknown[]) => void) | undefined = undefined;
-  readonly warn?: ((...args: unknown[]) => void) | undefined = undefined;
-  readonly error?: ((...args: unknown[]) => void) | undefined = undefined;
+export class OptionalLoggerImpl<
+  Error extends unknown[] = unknown[],
+  Warn extends unknown[] = unknown[],
+  Info extends unknown[] = unknown[],
+  Debug extends unknown[] = unknown[],
+> implements OptionalLogger<Error, Warn, Info, Debug>
+{
+  readonly debug?: ((...args: Debug) => void) | undefined = undefined;
+  readonly info?: ((...args: Info) => void) | undefined = undefined;
+  readonly warn?: ((...args: Warn) => void) | undefined = undefined;
+  readonly error?: ((...args: Error) => void) | undefined = undefined;
   readonly flush: () => Promise<void>;
 
-  constructor(logSink: LogSink, level: LogLevel = 'info', context?: Context) {
+  constructor(
+    logSink: LogSink<Error, Warn, Info, Debug>,
+    level: LogLevel = 'info',
+    context?: Context,
+  ) {
     const impl =
       (level: LogLevel) =>
       (...args: unknown[]) =>
@@ -94,7 +124,12 @@ export class OptionalLoggerImpl implements OptionalLogger {
 /**
  * Create a logger that will log to the console.
  */
-export class ConsoleLogger extends OptionalLoggerImpl {
+export class ConsoleLogger<
+  Error extends unknown[] = unknown[],
+  Warn extends unknown[] = unknown[],
+  Info extends unknown[] = unknown[],
+  Debug extends unknown[] = unknown[],
+> extends OptionalLoggerImpl<Error, Warn, Info, Debug> {
   constructor(level: LogLevel, context?: Context) {
     super(consoleLogSink, level, context);
   }
@@ -112,7 +147,13 @@ export const consoleLogSink: LogSink = {
 /**
  * A console logger that enables the caller to format log lines.
  */
-export class FormatLogger implements LogSink {
+export class FormatLogger<
+  Error extends unknown[] = unknown[],
+  Warn extends unknown[] = unknown[],
+  Info extends unknown[] = unknown[],
+  Debug extends unknown[] = unknown[],
+> implements LogSink<Error, Warn, Info, Debug>
+{
   #format: (level: LogLevel, ...args: unknown[]) => unknown[];
 
   constructor(format: (level: LogLevel, ...args: unknown[]) => unknown[]) {
@@ -151,7 +192,12 @@ export const logLevelPrefix = {
 /**
  * A logger that logs nothing.
  */
-export class SilentLogger implements OptionalLogger {}
+export class SilentLogger<
+  Error extends unknown[] = unknown[],
+  Warn extends unknown[] = unknown[],
+  Info extends unknown[] = unknown[],
+  Debug extends unknown[] = unknown[],
+> implements OptionalLogger<Error, Warn, Info, Debug> {}
 
 /**
  * The LogContext facilitates constructing and adding to the
@@ -164,7 +210,12 @@ export class SilentLogger implements OptionalLogger {}
  *   const lc2 = lc.withContext('foo');
  *   f(lc2);  // logging inside f will contain 'foo' in the Context.
  */
-export class LogContext extends OptionalLoggerImpl {
+export class LogContext<
+  Error extends unknown[] = unknown[],
+  Warn extends unknown[] = unknown[],
+  Info extends unknown[] = unknown[],
+  Debug extends unknown[] = unknown[],
+> extends OptionalLoggerImpl<Error, Warn, Info, Debug> {
   readonly #logSink: LogSink;
   readonly #level: LogLevel;
   readonly #context: Context | undefined;
@@ -184,7 +235,10 @@ export class LogContext extends OptionalLoggerImpl {
    * Creates a new Logger that with the given key and value
    * added to the logged Context.
    */
-  withContext(key: string, value?: unknown): LogContext {
+  withContext(
+    key: string,
+    value?: unknown,
+  ): LogContext<Error, Warn, Info, Debug> {
     const ctx = {...this.#context, [key]: value};
     return new LogContext(this.#level, ctx, this.#logSink);
   }

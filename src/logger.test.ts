@@ -1,4 +1,4 @@
-import {expect, assert} from 'chai';
+import {afterEach, expect, test, vi} from 'vitest';
 import {
   ConsoleLogger,
   consoleLogSink,
@@ -11,17 +11,15 @@ import {
   TeeLogSink,
   type LogLevel,
 } from './logger.js';
-import * as sinon from 'sinon';
-import {test, setup} from 'mocha';
 
 const mockConsoleMethod = (level: LogLevel) => {
-  const fake = sinon.fake();
-  sinon.replace(console, level, fake);
+  const fake = vi.fn();
+  vi.spyOn(console, level).mockImplementation(fake);
   return fake;
 };
 
-setup(() => {
-  sinon.restore();
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 test('level to method', () => {
@@ -32,55 +30,55 @@ test('level to method', () => {
 
   {
     const l = new ConsoleLogger('error');
-    expect(l.debug).to.be.undefined;
-    expect(l.info).to.be.undefined;
-    expect(l.warn).to.be.undefined;
-    expect(l.error).to.be.instanceOf(Function);
+    expect(l.debug).toBe(undefined);
+    expect(l.info).toBe(undefined);
+    expect(l.warn).toBe(undefined);
+    expect(l.error).toBeInstanceOf(Function);
 
     l.debug?.('aaa');
     l.info?.('bbb');
     l.warn?.('ccc');
     l.error?.('ddd');
-    expect(mockDebug.callCount).to.equal(0);
-    expect(mockInfo.callCount).to.equal(0);
-    expect(mockWarn.callCount).to.equal(0);
-    expect(mockError.calledWith('ddd')).to.be.true;
+    expect(mockDebug).not.toBeCalled();
+    expect(mockInfo).not.toBeCalled();
+    expect(mockWarn).not.toBeCalled();
+    expect(mockError).toHaveBeenCalledWith('ddd');
   }
 
   {
-    sinon.reset();
+    vi.clearAllMocks();
     const l = new ConsoleLogger('info');
-    expect(l.debug).to.be.undefined;
-    expect(l.info).to.be.instanceOf(Function);
-    expect(l.warn).to.be.instanceOf(Function);
-    expect(l.error).to.be.instanceOf(Function);
+    expect(l.debug).toBe(undefined);
+    expect(l.info).toBeInstanceOf(Function);
+    expect(l.warn).toBeInstanceOf(Function);
+    expect(l.error).toBeInstanceOf(Function);
 
     l.debug?.('ddd');
     l.info?.('eee');
     l.warn?.('fff');
     l.error?.('ggg');
-    expect(mockDebug.callCount).to.equal(0);
-    expect(mockInfo.lastCall.args).to.deep.equal(['eee']);
-    expect(mockWarn.lastCall.args).to.deep.equal(['fff']);
-    expect(mockError.lastCall.args).to.deep.equal(['ggg']);
+    expect(mockDebug).not.toBeCalled();
+    expect(mockInfo.mock.lastCall).toEqual(['eee']);
+    expect(mockWarn.mock.lastCall).toEqual(['fff']);
+    expect(mockError.mock.lastCall).toEqual(['ggg']);
   }
 
   {
-    sinon.reset();
+    vi.clearAllMocks();
     const l = new ConsoleLogger('debug');
-    expect(l.debug).to.be.instanceOf(Function);
-    expect(l.info).to.be.instanceOf(Function);
-    expect(l.warn).to.be.instanceOf(Function);
-    expect(l.error).to.be.instanceOf(Function);
+    expect(l.debug).toBeInstanceOf(Function);
+    expect(l.info).toBeInstanceOf(Function);
+    expect(l.warn).toBeInstanceOf(Function);
+    expect(l.error).toBeInstanceOf(Function);
 
     l.debug?.('ggg');
     l.info?.('hhh');
     l.warn?.('iii');
     l.error?.('jjj');
-    expect(mockDebug.lastCall.args).to.deep.equal(['ggg']);
-    expect(mockInfo.lastCall.args).to.deep.equal(['hhh']);
-    expect(mockWarn.lastCall.args).to.deep.equal(['iii']);
-    expect(mockError.lastCall.args).to.deep.equal(['jjj']);
+    expect(mockDebug.mock.lastCall).toEqual(['ggg']);
+    expect(mockInfo.mock.lastCall).toEqual(['hhh']);
+    expect(mockWarn.mock.lastCall).toEqual(['iii']);
+    expect(mockError.mock.lastCall).toEqual(['jjj']);
   }
 });
 
@@ -98,10 +96,10 @@ test('FormatLogger', () => {
     l.log('warn', {foo: 'bar'}, 'ccc');
     l.log('error', {foo: 'bar'}, 'ddd');
 
-    expect(mockDebug.lastCall.args).to.deep.equal(['aaa']);
-    expect(mockInfo.lastCall.args).to.deep.equal(['boo', 'bbb']);
-    expect(mockWarn.lastCall.args).to.deep.equal(['foo=bar', 'ccc']);
-    expect(mockError.lastCall.args).to.deep.equal(['foo=bar', 'ddd']);
+    expect(mockDebug.mock.lastCall).toEqual(['aaa']);
+    expect(mockInfo.mock.lastCall).toEqual(['boo', 'bbb']);
+    expect(mockWarn.mock.lastCall).toEqual(['foo=bar', 'ccc']);
+    expect(mockError.mock.lastCall).toEqual(['foo=bar', 'ddd']);
   }
   {
     // prefix with 'foo'
@@ -111,10 +109,10 @@ test('FormatLogger', () => {
     l.log('warn', {food: 'bard'}, 'ccc');
     l.log('error', {food: 'bard'}, 'ddd');
 
-    expect(mockDebug.lastCall.args).to.deep.equal(['foo', 'aaa']);
-    expect(mockInfo.lastCall.args).to.deep.equal(['foo', 'boo', 'bbb']);
-    expect(mockWarn.lastCall.args).to.deep.equal(['foo', 'food=bard', 'ccc']);
-    expect(mockError.lastCall.args).to.deep.equal(['foo', 'food=bard', 'ddd']);
+    expect(mockDebug.mock.lastCall).toEqual(['foo', 'aaa']);
+    expect(mockInfo.mock.lastCall).toEqual(['foo', 'boo', 'bbb']);
+    expect(mockWarn.mock.lastCall).toEqual(['foo', 'food=bard', 'ccc']);
+    expect(mockError.mock.lastCall).toEqual(['foo', 'food=bard', 'ddd']);
   }
 });
 
@@ -125,21 +123,21 @@ test('nodeConsoleLogSink', () => {
   const mockError = mockConsoleMethod('error');
 
   {
-    sinon.reset();
+    vi.clearAllMocks();
     const l = new OptionalLoggerImpl(nodeConsoleLogSink, 'debug', {foo: 'bar'});
-    expect(l.debug).to.be.instanceOf(Function);
-    expect(l.info).to.be.instanceOf(Function);
-    expect(l.warn).to.be.instanceOf(Function);
-    expect(l.error).to.be.instanceOf(Function);
+    expect(l.debug).toBeInstanceOf(Function);
+    expect(l.info).toBeInstanceOf(Function);
+    expect(l.warn).toBeInstanceOf(Function);
+    expect(l.error).toBeInstanceOf(Function);
 
     l.debug?.('ggg');
     l.info?.('hhh');
     l.warn?.('iii');
     l.error?.('jjj');
-    expect(mockDebug.lastCall.args).to.deep.equal(['DBG', 'foo=bar', 'ggg']);
-    expect(mockInfo.lastCall.args).to.deep.equal(['INF', 'foo=bar', 'hhh']);
-    expect(mockWarn.lastCall.args).to.deep.equal(['WRN', 'foo=bar', 'iii']);
-    expect(mockError.lastCall.args).to.deep.equal(['ERR', 'foo=bar', 'jjj']);
+    expect(mockDebug.mock.lastCall).toEqual(['DBG', 'foo=bar', 'ggg']);
+    expect(mockInfo.mock.lastCall).toEqual(['INF', 'foo=bar', 'hhh']);
+    expect(mockWarn.mock.lastCall).toEqual(['WRN', 'foo=bar', 'iii']);
+    expect(mockError.mock.lastCall).toEqual(['ERR', 'foo=bar', 'jjj']);
   }
 });
 
@@ -148,19 +146,19 @@ test('LogContext formatting', () => {
 
   const lc = new LogContext('debug');
   lc.debug?.('aaa');
-  expect(mockDebug.lastCall.args).to.deep.equal(['aaa']);
+  expect(mockDebug.mock.lastCall).toEqual(['aaa']);
 
   const lc2 = new LogContext('debug').withContext('bbb');
   lc2.debug?.('ccc');
-  expect(mockDebug.lastCall.args).to.deep.equal(['bbb', 'ccc']);
+  expect(mockDebug.mock.lastCall).toEqual(['bbb', 'ccc']);
 
   const lc3 = lc2.withContext('ddd');
   lc3.debug?.('eee');
-  expect(mockDebug.lastCall.args).to.deep.equal(['bbb', 'ddd', 'eee']);
+  expect(mockDebug.mock.lastCall).toEqual(['bbb', 'ddd', 'eee']);
 
   const lc4 = lc2.withContext('fff', 'ggg');
   lc4.debug?.('hhh');
-  expect(mockDebug.lastCall.args).to.deep.equal(['bbb', 'fff=ggg', 'hhh']);
+  expect(mockDebug.mock.lastCall).toEqual(['bbb', 'fff=ggg', 'hhh']);
 });
 
 test('LogContext default level', () => {
@@ -175,10 +173,10 @@ test('LogContext default level', () => {
   lc.warn?.('ccc');
   lc.error?.('ddd');
 
-  expect(mockDebug.callCount).to.equal(0);
-  expect(mockInfo.lastCall.args).to.deep.equal(['bbb']);
-  expect(mockWarn.lastCall.args).to.deep.equal(['ccc']);
-  expect(mockError.lastCall.args).to.deep.equal(['ddd']);
+  expect(mockDebug).not.toBeCalled();
+  expect(mockInfo.mock.lastCall).toEqual(['bbb']);
+  expect(mockWarn.mock.lastCall).toEqual(['ccc']);
+  expect(mockError.mock.lastCall).toEqual(['ddd']);
 });
 
 test('Optional tag', () => {
@@ -186,19 +184,19 @@ test('Optional tag', () => {
   const mockWarn = mockConsoleMethod('warn');
   const lc = new LogContext('debug');
   lc.debug?.('a');
-  expect(mockDebug.lastCall.args).to.deep.equal(['a']);
+  expect(mockDebug.mock.lastCall).toEqual(['a']);
 
   const lc2 = lc.withContext('b');
   lc2.debug?.('c');
   lc2.warn?.('d');
-  expect(mockDebug.lastCall.args).to.deep.equal(['b', 'c']);
-  expect(mockWarn.lastCall.args).to.deep.equal(['b', 'd']);
+  expect(mockDebug.mock.lastCall).toEqual(['b', 'c']);
+  expect(mockWarn.mock.lastCall).toEqual(['b', 'd']);
 
   const lc3 = lc.withContext('d', 'e');
   lc3.debug?.('f');
   lc3.warn?.('g');
-  expect(mockDebug.lastCall.args).to.deep.equal(['d=e', 'f']);
-  expect(mockWarn.lastCall.args).to.deep.equal(['d=e', 'g']);
+  expect(mockDebug.mock.lastCall).toEqual(['d=e', 'f']);
+  expect(mockWarn.mock.lastCall).toEqual(['d=e', 'g']);
 });
 
 class TestLogSink implements LogSink {
@@ -224,43 +222,43 @@ test('TeeLogSink', () => {
   const tl = new TeeLogSink([l1, l2]);
   const ctx = {foo: 'bar'};
 
-  expect(l1.messages).to.deep.equal([]);
-  expect(l2.messages).to.deep.equal([]);
+  expect(l1.messages).toEqual([]);
+  expect(l2.messages).toEqual([]);
 
   tl.log('info', ctx, 1, 2);
-  expect(l1.messages).to.deep.equal([['info', ctx, [1, 2]]]);
-  expect(l2.messages).to.deep.equal([['info', ctx, [1, 2]]]);
+  expect(l1.messages).toEqual([['info', ctx, [1, 2]]]);
+  expect(l2.messages).toEqual([['info', ctx, [1, 2]]]);
 
   tl.log('debug', ctx, 3);
-  expect(l1.messages).to.deep.equal([
+  expect(l1.messages).toEqual([
     ['info', ctx, [1, 2]],
     ['debug', ctx, [3]],
   ]);
-  expect(l2.messages).to.deep.equal([
+  expect(l2.messages).toEqual([
     ['info', ctx, [1, 2]],
     ['debug', ctx, [3]],
   ]);
 
   tl.log('warn', ctx, 4, 5);
-  expect(l1.messages).to.deep.equal([
+  expect(l1.messages).toEqual([
     ['info', ctx, [1, 2]],
     ['debug', ctx, [3]],
     ['warn', ctx, [4, 5]],
   ]);
-  expect(l2.messages).to.deep.equal([
+  expect(l2.messages).toEqual([
     ['info', ctx, [1, 2]],
     ['debug', ctx, [3]],
     ['warn', ctx, [4, 5]],
   ]);
 
   tl.log('error', ctx, 6, 7, 8);
-  expect(l1.messages).to.deep.equal([
+  expect(l1.messages).toEqual([
     ['info', ctx, [1, 2]],
     ['debug', ctx, [3]],
     ['warn', ctx, [4, 5]],
     ['error', ctx, [6, 7, 8]],
   ]);
-  expect(l2.messages).to.deep.equal([
+  expect(l2.messages).toEqual([
     ['info', ctx, [1, 2]],
     ['debug', ctx, [3]],
     ['warn', ctx, [4, 5]],
@@ -271,7 +269,7 @@ test('TeeLogSink', () => {
 test('Context-aware LogSink', () => {
   const sink = new TestLogSink();
 
-  expect(sink.messages).to.deep.equal([]);
+  expect(sink.messages).toEqual([]);
 
   const lc = new LogContext('debug', undefined, sink);
 
@@ -281,7 +279,7 @@ test('Context-aware LogSink', () => {
   lc.withContext('abc', 'is').withContext('easy', 'as').info?.(1, 2, 3);
   lc.debug?.(7, 8);
 
-  expect(sink.messages).to.deep.equal([
+  expect(sink.messages).toEqual([
     ['info', undefined, [1, 2]],
     ['debug', {foo: {bar: 'baz'}}, [3, 4]],
     ['info', {boo: 'oof'}, [5, 6]],
@@ -296,56 +294,56 @@ test('tee logger flush', async () => {
   const l3 = new TestLogSinkWithFlush();
   const tl = new TeeLogSink([l1, l2, l3]);
 
-  expect(l1.flushCount).to.equal(0);
-  expect(l3.flushCount).to.equal(0);
+  expect(l1.flushCount).toBe(0);
+  expect(l3.flushCount).toBe(0);
   await tl.flush();
-  expect(l1.flushCount).to.equal(1);
-  expect(l3.flushCount).to.equal(1);
+  expect(l1.flushCount).toBe(1);
+  expect(l3.flushCount).toBe(1);
 });
 
 test('optional logger flush', async () => {
   const l1 = new TestLogSinkWithFlush();
   const logger = new OptionalLoggerImpl(l1);
 
-  expect(l1.flushCount).to.equal(0);
+  expect(l1.flushCount).toBe(0);
   await logger.flush();
-  expect(l1.flushCount).to.equal(1);
+  expect(l1.flushCount).toBe(1);
 });
 
 test('Console logger calls JSON stringify on complex arguments', () => {
-  const jsonStringifySpy = sinon.spy(JSON, 'stringify');
+  const jsonStringifySpy = vi.spyOn(JSON, 'stringify');
   const mockDebug = mockConsoleMethod('debug');
   consoleLogSink.log('debug', undefined, 'a', false, 123, {b: 1}, [2, 3]);
-  assert(mockDebug.calledOnce);
-  assert.deepEqual(mockDebug.firstCall.args, [
+  expect(mockDebug).toHaveBeenCalledOnce();
+  expect(mockDebug.mock.calls[0]).toEqual([
     'a',
     false,
     123,
     '{"b":1}',
     '[2,3]',
   ]);
-  assert.equal(jsonStringifySpy.callCount, 2);
-  assert.deepEqual(jsonStringifySpy.getCall(0).firstArg, {b: 1});
-  assert.deepEqual(jsonStringifySpy.getCall(1).firstArg, [2, 3]);
+  expect(jsonStringifySpy).toHaveBeenCalledTimes(2);
+  expect(jsonStringifySpy.mock.calls[0][0]).toEqual({b: 1});
+  expect(jsonStringifySpy.mock.calls[1][0]).toEqual([2, 3]);
 
-  mockDebug.resetHistory();
+  mockDebug.mockClear();
 
   consoleLogSink.log(
     'debug',
     undefined,
     new Error('a', {cause: new TypeError('b')}),
   );
-  assert(mockDebug.calledOnce);
+  expect(mockDebug).toHaveBeenCalledOnce();
 
-  testNormalizeError(mockDebug.firstCall.firstArg);
+  testNormalizeError(mockDebug.mock.calls[0][0]);
 });
 
 test('nodeConsoleSink calls JSON stringify on complex arguments', () => {
-  const jsonStringifySpy = sinon.spy(JSON, 'stringify');
+  const jsonStringifySpy = vi.spyOn(JSON, 'stringify');
   const mockDebug = mockConsoleMethod('debug');
   nodeConsoleLogSink.log('debug', undefined, 'a', false, 123, {b: 1}, [2, 3]);
-  assert(mockDebug.calledOnce);
-  assert.deepEqual(mockDebug.firstCall.args, [
+  expect(mockDebug).toHaveBeenCalledOnce();
+  expect(mockDebug.mock.calls[0]).toEqual([
     'DBG',
     'a',
     false,
@@ -353,35 +351,35 @@ test('nodeConsoleSink calls JSON stringify on complex arguments', () => {
     '{"b":1}',
     '[2,3]',
   ]);
-  assert.equal(jsonStringifySpy.callCount, 2);
-  assert.deepEqual(jsonStringifySpy.getCall(0).firstArg, {b: 1});
-  assert.deepEqual(jsonStringifySpy.getCall(1).firstArg, [2, 3]);
+  expect(jsonStringifySpy).toHaveBeenCalledTimes(2);
+  expect(jsonStringifySpy.mock.calls[0][0]).toEqual({b: 1});
+  expect(jsonStringifySpy.mock.calls[1][0]).toEqual([2, 3]);
 
-  mockDebug.resetHistory();
+  mockDebug.mockClear();
 
   nodeConsoleLogSink.log(
     'debug',
     undefined,
     new Error('a', {cause: new TypeError('b')}),
   );
-  assert(mockDebug.calledOnce);
+  expect(mockDebug).toHaveBeenCalledOnce();
 
-  testNormalizeError(mockDebug.firstCall.args[1]);
+  testNormalizeError(mockDebug.mock.calls[0][1]);
 });
 
 function testNormalizeError(stringifiedError: string) {
   const obj = JSON.parse(stringifiedError);
-  assert(typeof obj.stack === 'string');
+  expect(typeof obj.stack).toBe('string');
   const {cause} = obj;
   delete obj.stack;
   delete obj.cause;
-  assert.deepEqual(obj, {
+  expect(obj).toEqual({
     message: 'a',
     name: 'Error',
   });
-  assert(typeof cause.stack === 'string');
+  expect(typeof cause.stack).toBe('string');
   delete cause.stack;
-  assert.deepEqual(cause, {
+  expect(cause).toEqual({
     message: 'b',
     name: 'TypeError',
   });
