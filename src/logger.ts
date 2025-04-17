@@ -40,20 +40,20 @@ export interface LogSink {
  * A [[LogSink]] implementation that logs to multiple sinks.
  */
 export class TeeLogSink implements LogSink {
-  private readonly _sinks: readonly LogSink[];
+  readonly #sinks: readonly LogSink[];
 
   constructor(sinks: readonly LogSink[]) {
-    this._sinks = sinks;
+    this.#sinks = sinks;
   }
 
   log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void {
-    for (const logger of this._sinks) {
+    for (const logger of this.#sinks) {
       logger.log(level, context, ...args);
     }
   }
 
   async flush(): Promise<void> {
-    await Promise.all(this._sinks.map(logger => logger.flush?.()));
+    await Promise.all(this.#sinks.map(logger => logger.flush?.()));
   }
 }
 
@@ -113,14 +113,14 @@ export const consoleLogSink: LogSink = {
  * A console logger that enables the caller to format log lines.
  */
 export class FormatLogger implements LogSink {
-  private _format: (level: LogLevel, ...args: unknown[]) => unknown[];
+  #format: (level: LogLevel, ...args: unknown[]) => unknown[];
 
   constructor(format: (level: LogLevel, ...args: unknown[]) => unknown[]) {
-    this._format = format;
+    this.#format = format;
   }
 
   log(level: LogLevel, context: Context | undefined, ...args: unknown[]): void {
-    console[level](...this._format(level, ...stringified(context), ...args));
+    console[level](...this.#format(level, ...stringified(context), ...args));
   }
 }
 
@@ -165,9 +165,9 @@ export class SilentLogger implements OptionalLogger {}
  *   f(lc2);  // logging inside f will contain 'foo' in the Context.
  */
 export class LogContext extends OptionalLoggerImpl {
-  private readonly _logSink: LogSink;
-  private readonly _level: LogLevel;
-  private readonly _context: Context | undefined;
+  readonly #logSink: LogSink;
+  readonly #level: LogLevel;
+  readonly #context: Context | undefined;
 
   constructor(
     level: LogLevel = 'info',
@@ -175,9 +175,9 @@ export class LogContext extends OptionalLoggerImpl {
     logSink: LogSink = consoleLogSink,
   ) {
     super(logSink, level, context);
-    this._level = level;
-    this._logSink = logSink;
-    this._context = context;
+    this.#level = level;
+    this.#logSink = logSink;
+    this.#context = context;
   }
 
   /**
@@ -185,8 +185,8 @@ export class LogContext extends OptionalLoggerImpl {
    * added to the logged Context.
    */
   withContext(key: string, value?: unknown): LogContext {
-    const ctx = {...this._context, [key]: value};
-    return new LogContext(this._level, ctx, this._logSink);
+    const ctx = {...this.#context, [key]: value};
+    return new LogContext(this.#level, ctx, this.#logSink);
   }
 }
 
