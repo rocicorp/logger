@@ -2,7 +2,10 @@
   "name": "@rocicorp/logger",
   "description": "Logging utilities",
   "version": "5.4.0",
-  "repository": "github:rocicorp/logger",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rocicorp/logger.git"
+  },
   "license": "Apache-2.0",
   "scripts": {
     "test": "vitest run src/",
