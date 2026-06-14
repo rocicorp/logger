@@ -82,6 +82,33 @@ test('level to method', () => {
   }
 });
 
+test('log methods are shared across instances (no per-call closures)', () => {
+  const sink = new TestLogSink();
+
+  // The enabled log methods should be the *same* function reference across
+  // instances built from the same class, proving they are not freshly
+  // allocated closures per construction.
+  const a = new OptionalLoggerImpl(sink, 'debug');
+  const b = new OptionalLoggerImpl(sink, 'debug');
+  expect(a.debug).toBe(b.debug);
+  expect(a.info).toBe(b.info);
+  expect(a.warn).toBe(b.warn);
+  expect(a.error).toBe(b.error);
+  expect(a.flush).toBe(b.flush);
+
+  // Even though the method reference is shared, each instance logs with its
+  // own context (the methods read instance fields via `this`).
+  const c = new OptionalLoggerImpl(sink, 'debug', {a: 1});
+  const d = new OptionalLoggerImpl(sink, 'debug', {b: 2});
+  expect(c.debug).toBe(d.debug);
+  c.debug?.('x');
+  d.debug?.('y');
+  expect(sink.messages).toEqual([
+    ['debug', {a: 1}, ['x']],
+    ['debug', {b: 2}, ['y']],
+  ]);
+});
+
 test('FormatLogger', () => {
   const mockDebug = mockConsoleMethod('debug');
   const mockInfo = mockConsoleMethod('info');
