@@ -1,0 +1,12 @@
+{
+  "singleQuote": true,
+  "trailingComma": "all",
+  "arrowParens": "avoid",
+  "bracketSpacing": false,
+  "quoteProps": "consistent",
+  "printWidth": 80,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "out/"
+  ]
+}

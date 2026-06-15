@@ -58,8 +58,7 @@ export class TeeLogSink<
   Warn extends unknown[] = unknown[],
   Info extends unknown[] = unknown[],
   Debug extends unknown[] = unknown[],
-> implements LogSink<Error, Warn, Info, Debug>
-{
+> implements LogSink<Error, Warn, Info, Debug> {
   readonly #sinks: readonly LogSink[];
 
   constructor(sinks: readonly LogSink[]) {
@@ -82,8 +81,7 @@ export class OptionalLoggerImpl<
   Warn extends unknown[] = unknown[],
   Info extends unknown[] = unknown[],
   Debug extends unknown[] = unknown[],
-> implements OptionalLogger<Error, Warn, Info, Debug>
-{
+> implements OptionalLogger<Error, Warn, Info, Debug> {
   readonly debug?: ((...args: Debug) => void) | undefined = undefined;
   readonly info?: ((...args: Info) => void) | undefined = undefined;
   readonly warn?: ((...args: Warn) => void) | undefined = undefined;
@@ -179,8 +177,7 @@ export class FormatLogger<
   Warn extends unknown[] = unknown[],
   Info extends unknown[] = unknown[],
   Debug extends unknown[] = unknown[],
-> implements LogSink<Error, Warn, Info, Debug>
-{
+> implements LogSink<Error, Warn, Info, Debug> {
   #format: (level: LogLevel, ...args: unknown[]) => unknown[];
 
   constructor(format: (level: LogLevel, ...args: unknown[]) => unknown[]) {
