@@ -1,7 +1,7 @@
 {
   "name": "@rocicorp/logger",
   "description": "Logging utilities",
-  "version": "5.5.0",
+  "version": "6.0.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rocicorp/logger.git"
