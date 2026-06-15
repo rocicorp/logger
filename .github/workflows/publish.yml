@@ -6,9 +6,17 @@ on:
       - 'v*'
   # pull_request:
 
+# Default-deny: grant tokens only to the jobs/steps that need them.
+permissions: {}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Gate publishes behind the "release" environment. Configure protection
+    # rules on it in repo Settings → Environments (required reviewers, and a
+    # deployment branch/tag policy limited to v* tags) so a publish can only
+    # run from a release tag and, optionally, after manual approval.
+    environment: release
     permissions:
       contents: read
       id-token: write # required for npm OIDC trusted publishing
