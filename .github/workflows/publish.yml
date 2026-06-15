@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      id-token: write # required for npm OIDC trusted publishing
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -20,15 +20,13 @@ jobs:
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: '24.x'
-          registry-url: https://registry.npmjs.org
 
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6
-
+      # corepack activates pnpm@11.1.3 from package.json's packageManager field.
+      # pnpm >=11.0.7 supports npm OIDC trusted publishing natively (and 11.1.3
+      # fixes the setup-node .npmrc interaction, pnpm#11513), so no NPM_TOKEN
+      # secret and no npm upgrade are needed.
       - name: Enable Corepack
         run: corepack enable
-
-      - name: Upgrade npm for OIDC trusted publishing support
-        run: COREPACK_ENABLE_STRICT=0 npm install --global npm@latest
 
       - name: Print tool versions
         run: |
