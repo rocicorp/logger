@@ -91,3 +91,6 @@ import {
 const logSink: LogSink = new ExampleLogSink();
 const l: OptionalLogger = new OptionalLoggerImpl(logSink);
 ```
+
+
+TEST
