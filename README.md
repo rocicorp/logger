@@ -93,4 +93,4 @@ const l: OptionalLogger = new OptionalLoggerImpl(logSink);
 ```
 
 
-TEST
+<!-- TEST -->
