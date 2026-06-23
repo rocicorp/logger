@@ -88,61 +88,37 @@ export class OptionalLoggerImpl<
   readonly error?: ((...args: Error) => void) | undefined = undefined;
   readonly flush: () => Promise<void>;
 
-  readonly #logSink: LogSink<Error, Warn, Info, Debug>;
-  readonly #context: Context | undefined;
-
   constructor(
     logSink: LogSink<Error, Warn, Info, Debug>,
     level: LogLevel = 'info',
     context?: Context,
   ) {
-    this.#logSink = logSink;
-    this.#context = context;
+    const debug = (...args: Debug) => logSink.log('debug', context, ...args);
+    const info = (...args: Info) => logSink.log('info', context, ...args);
+    const warn = (...args: Warn) => logSink.log('warn', context, ...args);
+    const error = (...args: Error) => logSink.log('error', context, ...args);
 
-    // Assign shared private-method references (rather than freshly allocated
-    // closures) to the enabled log methods. The methods read `this.#logSink`
-    // and `this.#context`, so they behave identically while avoiding a new
-    // closure allocation per method on every construction. The methods remain
-    // `undefined` below the configured level so that `lc.debug?.(expensive())`
-    // still short-circuits and never evaluates its arguments.
+    // The enabled methods remain `undefined` below the configured level so that
+    // `lc.debug?.(expensive())` still short-circuits and never evaluates its
+    // arguments. They are plain functions so callers can safely extract them.
     /* eslint-disable no-fallthrough , @typescript-eslint/ban-ts-comment */
     switch (level) {
       // @ts-ignore
       case 'debug':
-        this.debug = this.#debug;
+        this.debug = debug;
       // @ts-ignore
       case 'info':
-        this.info = this.#info;
+        this.info = info;
       // @ts-ignore
       case 'warn':
-        this.warn = this.#warn;
+        this.warn = warn;
       // @ts-ignore
       case 'error':
-        this.error = this.#error;
+        this.error = error;
     }
     /* eslint-enable @typescript-eslint/ban-ts-comment, no-fallthrough */
 
-    this.flush = this.#flush;
-  }
-
-  #debug(...args: unknown[]): void {
-    this.#logSink.log('debug', this.#context, ...args);
-  }
-
-  #info(...args: unknown[]): void {
-    this.#logSink.log('info', this.#context, ...args);
-  }
-
-  #warn(...args: unknown[]): void {
-    this.#logSink.log('warn', this.#context, ...args);
-  }
-
-  #error(...args: unknown[]): void {
-    this.#logSink.log('error', this.#context, ...args);
-  }
-
-  #flush(): Promise<void> {
-    return this.#logSink.flush?.() ?? Promise.resolve();
+    this.flush = () => logSink.flush?.() ?? Promise.resolve();
   }
 }
 
