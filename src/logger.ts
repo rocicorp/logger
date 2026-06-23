@@ -11,11 +11,19 @@ export interface OptionalLogger<
   Info extends unknown[] = unknown[],
   Debug extends unknown[] = unknown[],
 > {
-  error?: ((...args: Error) => void) | undefined;
-  info?: ((...args: Info) => void) | undefined;
-  warn?: ((...args: Warn) => void) | undefined;
-  debug?: ((...args: Debug) => void) | undefined;
-  flush?: (() => Promise<void>) | undefined;
+  error?:
+    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Error) => void)
+    | undefined;
+  info?:
+    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Info) => void)
+    | undefined;
+  warn?:
+    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Warn) => void)
+    | undefined;
+  debug?:
+    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Debug) => void)
+    | undefined;
+  flush?(this: OptionalLogger<Error, Warn, Info, Debug>): Promise<void>;
 }
 
 /**
@@ -82,11 +90,21 @@ export class OptionalLoggerImpl<
   Info extends unknown[] = unknown[],
   Debug extends unknown[] = unknown[],
 > implements OptionalLogger<Error, Warn, Info, Debug> {
-  readonly debug?: ((...args: Debug) => void) | undefined = undefined;
-  readonly info?: ((...args: Info) => void) | undefined = undefined;
-  readonly warn?: ((...args: Warn) => void) | undefined = undefined;
-  readonly error?: ((...args: Error) => void) | undefined = undefined;
-  readonly flush: () => Promise<void>;
+  readonly debug?:
+    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Debug) => void)
+    | undefined = undefined;
+  readonly info?:
+    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Info) => void)
+    | undefined = undefined;
+  readonly warn?:
+    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Warn) => void)
+    | undefined = undefined;
+  readonly error?:
+    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Error) => void)
+    | undefined = undefined;
+  readonly flush: (
+    this: OptionalLogger<Error, Warn, Info, Debug>,
+  ) => Promise<void>;
 
   readonly #logSink: LogSink<Error, Warn, Info, Debug>;
   readonly #context: Context | undefined;

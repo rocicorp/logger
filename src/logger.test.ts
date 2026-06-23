@@ -411,3 +411,16 @@ function testNormalizeError(stringifiedError: string) {
     name: 'TypeError',
   });
 }
+
+test.skip('type checking', () => {
+  expect(true).toBe(true);
+
+  const lc = new OptionalLoggerImpl(consoleLogSink, 'debug', {foo: 'bar'});
+  const {debug} = lc;
+
+  // @ts-expect-error Should not allow extracted method.
+  debug?.('a');
+
+  // OK
+  debug?.call(lc, 'a');
+});
