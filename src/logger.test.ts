@@ -412,14 +412,17 @@ function testNormalizeError(stringifiedError: string) {
   });
 }
 
-test.skip('type checking', () => {
+test('type checking', () => {
   expect(true).toBe(true);
 
   const lc = new OptionalLoggerImpl(consoleLogSink, 'debug', {foo: 'bar'});
   const {debug} = lc;
 
-  // @ts-expect-error Should not allow extracted method.
-  debug?.('a');
+  const f = () => {
+    // @ts-expect-error Should not allow extracted method.
+    debug?.('a');
+  };
+  expect(f).toThrowError()
 
   // OK
   debug?.call(lc, 'a');
