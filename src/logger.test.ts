@@ -422,7 +422,7 @@ test('type checking', () => {
     // @ts-expect-error Should not allow extracted method.
     debug?.('a');
   };
-  expect(f).toThrowError()
+  expect(f).toThrowError();
 
   // OK
   debug?.call(lc, 'a');
