@@ -11,19 +11,11 @@ export interface OptionalLogger<
   Info extends unknown[] = unknown[],
   Debug extends unknown[] = unknown[],
 > {
-  error?:
-    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Error) => void)
-    | undefined;
-  info?:
-    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Info) => void)
-    | undefined;
-  warn?:
-    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Warn) => void)
-    | undefined;
-  debug?:
-    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Debug) => void)
-    | undefined;
-  flush?(this: OptionalLogger<Error, Warn, Info, Debug>): Promise<void>;
+  error?: ((this: this, ...args: Error) => void) | undefined;
+  info?: ((this: this, ...args: Info) => void) | undefined;
+  warn?: ((this: this, ...args: Warn) => void) | undefined;
+  debug?: ((this: this, ...args: Debug) => void) | undefined;
+  flush?(this: this): Promise<void>;
 }
 
 /**
@@ -90,21 +82,13 @@ export class OptionalLoggerImpl<
   Info extends unknown[] = unknown[],
   Debug extends unknown[] = unknown[],
 > implements OptionalLogger<Error, Warn, Info, Debug> {
-  readonly debug?:
-    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Debug) => void)
-    | undefined = undefined;
-  readonly info?:
-    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Info) => void)
-    | undefined = undefined;
-  readonly warn?:
-    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Warn) => void)
-    | undefined = undefined;
-  readonly error?:
-    | ((this: OptionalLogger<Error, Warn, Info, Debug>, ...args: Error) => void)
-    | undefined = undefined;
-  readonly flush: (
-    this: OptionalLogger<Error, Warn, Info, Debug>,
-  ) => Promise<void>;
+  readonly debug?: ((this: this, ...args: Debug) => void) | undefined =
+    undefined;
+  readonly info?: ((this: this, ...args: Info) => void) | undefined = undefined;
+  readonly warn?: ((this: this, ...args: Warn) => void) | undefined = undefined;
+  readonly error?: ((this: this, ...args: Error) => void) | undefined =
+    undefined;
+  readonly flush: (this: this) => Promise<void>;
 
   readonly #logSink: LogSink<Error, Warn, Info, Debug>;
   readonly #context: Context | undefined;
